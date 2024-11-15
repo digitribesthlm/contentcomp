@@ -49,13 +49,10 @@ export default function DashboardLayout({ children }) {
               </div>
               <div className="hidden md:flex space-x-8">
                 <a href="/dashboard" className={`text-gray-600 hover:text-gray-900 ${router.pathname === '/dashboard' ? 'text-blue-600 font-medium' : ''}`}>
-                  Dashboard
+                  Content Comparison
                 </a>
-                <a href="/dashboard/topics" className={`text-gray-600 hover:text-gray-900 ${router.pathname === '/dashboard/topics' ? 'text-blue-600 font-medium' : ''}`}>
-                  Topics
-                </a>
-                <a href="/dashboard/analytics" className={`text-gray-600 hover:text-gray-900 ${router.pathname === '/dashboard/analytics' ? 'text-blue-600 font-medium' : ''}`}>
-                  Analytics
+                <a href="/dashboard/keyword-analysis" className={`text-gray-600 hover:text-gray-900 ${router.pathname === '/dashboard/keyword-analysis' ? 'text-blue-600 font-medium' : ''}`}>
+                  Keyword Analysis
                 </a>
               </div>
             </div>
