@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
+import AnalysisDisplay from '../../components/AnalysisDisplay';
 
 export default function CrawlerPage() {
   const [url, setUrl] = useState('');
@@ -116,11 +117,7 @@ export default function CrawlerPage() {
                   {saveStatus === 'saved' ? 'Saved!' : 'Save Analysis'}
                 </button>
               </div>
-              <div className="bg-base-200 p-4 rounded-lg overflow-x-auto">
-                <pre className="text-sm whitespace-pre-wrap">
-                  {JSON.stringify(analysis, null, 2)}
-                </pre>
-              </div>
+              <AnalysisDisplay analysis={analysis} />
             </div>
           )}
 
