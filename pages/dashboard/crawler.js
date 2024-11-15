@@ -6,6 +6,7 @@ export default function CrawlerPage() {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [saveStatus, setSaveStatus] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +33,30 @@ export default function CrawlerPage() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!analysis) return;
+    
+    setSaveStatus('saving');
+    try {
+      const response = await fetch('/api/save-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(analysis),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save analysis');
+      }
+
+      setSaveStatus('saved');
+    } catch (err) {
+      console.error('Save error:', err);
+      setSaveStatus('error');
     }
   };
 
@@ -80,12 +105,31 @@ export default function CrawlerPage() {
 
           {analysis && (
             <div className="mt-8">
-              <h3 className="text-lg font-semibold mb-4">Analysis Results</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Analysis Results</h3>
+                <button 
+                  onClick={handleSave}
+                  disabled={saveStatus === 'saving'}
+                  className={`btn btn-primary ${saveStatus === 'saved' ? 'btn-success' : ''}`}
+                >
+                  {saveStatus === 'saving' && <span className="loading loading-spinner"></span>}
+                  {saveStatus === 'saved' ? 'Saved!' : 'Save Analysis'}
+                </button>
+              </div>
               <div className="bg-base-200 p-4 rounded-lg overflow-x-auto">
-                <pre className="text-sm">
+                <pre className="text-sm whitespace-pre-wrap">
                   {JSON.stringify(analysis, null, 2)}
                 </pre>
               </div>
+            </div>
+          )}
+
+          {saveStatus === 'error' && (
+            <div className="alert alert-error mt-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Failed to save analysis</span>
             </div>
           )}
         </div>
