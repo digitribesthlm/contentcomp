@@ -2,14 +2,16 @@
 import OpenAI from 'openai';
 import { seoAnalysisTemplate } from '../../utils/seoTemplates';
 
+export const config = {
+  maxDuration: 300,
+  runtime: 'edge'
+};
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 export default async function handler(req, res) {
-  // Add timeout for Vercel
-  res.socket.setTimeout(300000); // 5 minutes timeout
-
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -59,17 +61,19 @@ export default async function handler(req, res) {
       console.log('After OpenAI call');
 
       const analysis = JSON.parse(completion.choices[0].message.content);
-      res.status(200).json(analysis);
+      return new Response(JSON.stringify(analysis), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
     } catch (e) {
       console.error('OpenAI Error:', e.message);
       throw e;
     }
   } catch (error) {
-    console.error('Final error catch:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack?.split('\n')
+    console.error('Final error catch:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
     });
-    res.status(500).json({ error: error.message });
   }
 }
