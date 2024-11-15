@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import { seoAnalysisTemplate } from '../../utils/seoTemplates';
 
 export const config = {
-  maxDuration: 300,
+  maxDuration: 400,
   runtime: 'edge'
 };
 
