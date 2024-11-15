@@ -1,9 +1,8 @@
-import { clientPromise, dbName } from '../../lib/mongodb';
+import { connectToDatabase } from '../../utils/mongodb';
 
 export default async function handler(req, res) {
   try {
-    const client = await clientPromise;
-    const db = client.db(dbName);
+    const { db } = await connectToDatabase();
     
     const pages = await db
       .collection("seo_structure_pages_json")
