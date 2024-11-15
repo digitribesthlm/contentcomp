@@ -54,6 +54,9 @@ export default function DashboardLayout({ children }) {
                 <a href="/dashboard/keyword-analysis" className={`text-gray-600 hover:text-gray-900 ${router.pathname === '/dashboard/keyword-analysis' ? 'text-blue-600 font-medium' : ''}`}>
                   Keyword Analysis
                 </a>
+                <a href="/dashboard/crawler" className={`text-gray-600 hover:text-gray-900 ${router.pathname === '/dashboard/crawler' ? 'text-blue-600 font-medium' : ''}`}>
+                  Crawler
+                </a>
               </div>
             </div>
 

@@ -13,19 +13,25 @@ export default async function handler(req, res) {
 
   try {
     const { url } = req.body;
+    console.log('Received URL:', url);
 
     // Scrape website content
+    console.log('Attempting to scrape with Jina AI...');
     const scrapeResponse = await fetch(`https://r.jina.ai/${url}`, {
       headers: { 'Authorization': `Bearer ${process.env.JINA_API_KEY}` }
     });
 
+    console.log('Jina AI response status:', scrapeResponse.status);
+    
     if (!scrapeResponse.ok) {
       throw new Error('Failed to scrape website');
     }
 
     const content = await scrapeResponse.text();
+    console.log('Content retrieved, length:', content.length);
 
     // Analyze with OpenAI
+    console.log('Starting OpenAI analysis...');
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini-2024-07-18",
       messages: [
@@ -42,10 +48,11 @@ export default async function handler(req, res) {
       response_format: { type: "json_object" }
     });
 
+    console.log('OpenAI analysis completed');
     const analysis = JSON.parse(completion.choices[0].message.content);
     res.status(200).json(analysis);
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in analyze-seo:', error);
     res.status(500).json({ error: error.message });
   }
 }
