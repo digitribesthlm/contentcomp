@@ -15,6 +15,10 @@ export default async function handler(req, res) {
     const { url } = req.body;
     console.log('Received URL:', url);
 
+    // Check API keys
+    console.log('JINA_API_KEY exists:', !!process.env.JINA_API_KEY);
+    console.log('OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY);
+
     // Scrape website content
     console.log('Attempting to scrape with Jina AI...');
     const scrapeResponse = await fetch(`https://r.jina.ai/${url}`, {
@@ -46,13 +50,25 @@ export default async function handler(req, res) {
         }
       ],
       response_format: { type: "json_object" }
+    }).catch(error => {
+      console.error('OpenAI API Error:', {
+        message: error.message,
+        type: error.type,
+        code: error.code,
+        param: error.param
+      });
+      throw error;
     });
 
     console.log('OpenAI analysis completed');
     const analysis = JSON.parse(completion.choices[0].message.content);
     res.status(200).json(analysis);
   } catch (error) {
-    console.error('Error in analyze-seo:', error);
+    console.error('Error in analyze-seo:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
     res.status(500).json({ error: error.message });
   }
 }
