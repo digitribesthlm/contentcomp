@@ -7,6 +7,9 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req, res) {
+  // Add timeout for Vercel
+  res.socket.setTimeout(300000); // 5 minutes timeout
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -36,10 +39,8 @@ export default async function handler(req, res) {
 
     // Analyze with OpenAI
     console.log('Starting OpenAI analysis...');
-    console.log('Initializing OpenAI request...');
-    
     try {
-      console.log('Sending request to OpenAI API...');
+      console.log('Before OpenAI call');
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini-2024-07-18",
         messages: [
@@ -55,47 +56,20 @@ export default async function handler(req, res) {
         ],
         response_format: { type: "json_object" }
       });
+      console.log('After OpenAI call');
 
-      console.log('OpenAI response received');
-      console.log('Response status:', completion.status);
-      console.log('Model used:', completion.model);
-      console.log('Response tokens:', {
-        completion_tokens: completion.usage?.completion_tokens,
-        prompt_tokens: completion.usage?.prompt_tokens,
-        total_tokens: completion.usage?.total_tokens
-      });
-
-      if (!completion.choices || !completion.choices[0]) {
-        throw new Error('No completion choices returned from OpenAI');
-      }
-
-      console.log('Parsing OpenAI response...');
       const analysis = JSON.parse(completion.choices[0].message.content);
-      console.log('Analysis parsed successfully');
-      
       res.status(200).json(analysis);
-    } catch (openAiError) {
-      console.error('OpenAI API Error Details:', {
-        error: openAiError,
-        message: openAiError.message,
-        type: openAiError.type,
-        code: openAiError.code,
-        status: openAiError.status,
-        statusText: openAiError.statusText,
-        response: openAiError.response,
-        stack: openAiError.stack
-      });
-      throw new Error(`OpenAI API Error: ${openAiError.message}`);
+    } catch (e) {
+      console.error('OpenAI Error:', e.message);
+      throw e;
     }
   } catch (error) {
-    console.error('Error in analyze-seo:', {
+    console.error('Final error catch:', {
       message: error.message,
       name: error.name,
-      stack: error.stack
+      stack: error.stack?.split('\n')
     });
-    res.status(500).json({ 
-      error: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    res.status(500).json({ error: error.message });
   }
 }
