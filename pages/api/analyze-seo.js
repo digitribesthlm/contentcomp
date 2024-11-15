@@ -11,14 +11,25 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+export default async function handler(request) {
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ message: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {
-    const { url } = req.body;
+    const body = await request.json();
+    const { url } = body;
     console.log('Received URL:', url);
+
+    if (!url) {
+      return new Response(JSON.stringify({ error: 'URL is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // Check API keys
     console.log('JINA_API_KEY exists:', !!process.env.JINA_API_KEY);
