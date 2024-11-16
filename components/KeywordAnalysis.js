@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import KeywordVennDiagram from './KeywordVennDiagram';
 import KeywordComparison from './KeywordComparison';
+import CartDisplay from './CartDisplay';
 
 export default function KeywordAnalysis({ data }) {
   const [selectedDomain, setSelectedDomain] = useState('all');
   const [keywordFilter, setKeywordFilter] = useState('all');
   const [comparisonDomains, setComparisonDomains] = useState([]);
+  const [cartKeywords, setCartKeywords] = useState([]);
 
   // Get available domains
   const domains = useMemo(() => {
@@ -168,8 +170,65 @@ export default function KeywordAnalysis({ data }) {
     );
   };
 
+  const handleAddToCart = (keyword) => {
+    if (!cartKeywords.includes(keyword)) {
+      setCartKeywords(prev => [...prev, keyword]);
+    }
+  };
+
+  const handleRemoveFromCart = (keyword) => {
+    setCartKeywords(prev => prev.filter(k => k !== keyword));
+  };
+
   return (
     <div>
+      {selectedDomain === 'all' && (
+        <div className="bg-base-200 p-6 rounded-lg mb-8">
+          <h2 className="text-2xl font-bold mb-4">Keyword Analysis Overview</h2>
+          <p className="mb-4">
+            This tool helps you analyze and compare keyword usage across different domains. Select a domain to start analyzing its keyword strategy and compare it with competitors.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="card bg-base-100 shadow-sm">
+              <div className="card-body">
+                <h3 className="card-title text-primary">Shared Keywords</h3>
+                <p>Keywords that both you and your competitors are using. These represent common ground in your market.</p>
+              </div>
+            </div>
+            <div className="card bg-base-100 shadow-sm">
+              <div className="card-body">
+                <h3 className="card-title text-error">Missing Keywords</h3>
+                <p>Keywords that all competitors use but you don't. These might represent gaps in your content strategy.</p>
+              </div>
+            </div>
+            <div className="card bg-base-100 shadow-sm">
+              <div className="card-body">
+                <h3 className="card-title text-warning">Untapped Keywords</h3>
+                <p>Keywords used by some competitors but not by you. These represent potential opportunities.</p>
+              </div>
+            </div>
+            <div className="card bg-base-100 shadow-sm">
+              <div className="card-body">
+                <h3 className="card-title text-success">Unique Keywords</h3>
+                <p>Keywords only your domain uses. These might be your competitive advantage.</p>
+              </div>
+            </div>
+            <div className="card bg-base-100 shadow-sm">
+              <div className="card-body">
+                <h3 className="card-title">Keyword Density</h3>
+                <p>Shows how frequently keywords appear in content. Higher density indicates stronger focus on that keyword.</p>
+              </div>
+            </div>
+            <div className="card bg-base-100 shadow-sm">
+              <div className="card-body">
+                <h3 className="card-title">Visual Analysis</h3>
+                <p>Use the Venn diagram and comparison tools below to visualize keyword relationships between domains.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <select 
           className="select select-bordered w-full max-w-xs mb-4"
@@ -271,9 +330,20 @@ export default function KeywordAnalysis({ data }) {
                     </div>
                   </td>
                   <td>
-                    {!domainUsage.has(selectedDomain) && (
-                      <button className="btn btn-xs btn-primary">
+                    {!domainUsage.has(selectedDomain) && !cartKeywords.includes(keyword) && (
+                      <button 
+                        className="btn btn-xs btn-primary"
+                        onClick={() => handleAddToCart(keyword)}
+                      >
                         Add to Keywords
+                      </button>
+                    )}
+                    {cartKeywords.includes(keyword) && (
+                      <button 
+                        className="btn btn-xs btn-ghost"
+                        onClick={() => handleRemoveFromCart(keyword)}
+                      >
+                        Remove
                       </button>
                     )}
                   </td>
@@ -302,6 +372,13 @@ export default function KeywordAnalysis({ data }) {
           />
         </>
       )}
+
+      <CartDisplay 
+        keywords={cartKeywords}
+        onRemove={handleRemoveFromCart}
+        selectedDomain={selectedDomain}
+        masterKeywords={masterKeywords}
+      />
     </div>
   );
 }
