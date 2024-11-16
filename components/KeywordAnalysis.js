@@ -13,93 +13,152 @@ export default function KeywordAnalysis({ data }) {
     return ['all', ...new Set(data.pages.map(page => page.website_info.domain))];
   }, [data]);
 
-  // First, calculate categorizeKeywords
-  const categorizeKeywords = useMemo(() => {
-    if (!data?.pages || !selectedDomain || selectedDomain === 'all') return {};
+  // Create master keyword table
+  const masterKeywords = useMemo(() => {
+    if (!data?.pages || !selectedDomain || selectedDomain === 'all') return new Map();
 
-    // Get all keywords for the selected domain
-    const selectedDomainPage = data.pages.find(p => p.website_info.domain === selectedDomain);
-    if (!selectedDomainPage) return {};
+    const keywordTable = new Map();
+    
+    // Get list of competitor domains
+    const competitorDomains = new Set(
+      data.pages
+        .map(p => p.website_info.domain)
+        .filter(d => d !== selectedDomain)
+    );
 
-    const selectedKeywords = new Set([
-      ...(selectedDomainPage.content_analysis?.primary_keywords || []),
-      ...(selectedDomainPage.content_analysis?.supporting_keywords || []),
-      ...Object.keys(selectedDomainPage.seo_metrics?.keyword_density || {})
-    ]);
-
-    // Get keywords by domain
-    const keywordsByDomain = new Map();
+    // First pass: Collect all keywords and their domain usage
     data.pages.forEach(page => {
       const domain = page.website_info.domain;
-      if (domain !== selectedDomain) {
-        const keywords = new Set([
-          ...(page.content_analysis?.primary_keywords || []),
-          ...(page.content_analysis?.supporting_keywords || []),
-          ...Object.keys(page.seo_metrics?.keyword_density || {})
-        ]);
-        keywordsByDomain.set(domain, keywords);
-      }
-    });
+      
+      // Helper function to add keyword
+      const addKeyword = (keyword, density, isPrimary, isSupporting) => {
+        const lowerKey = keyword.toLowerCase();
+        if (!keywordTable.has(lowerKey)) {
+          keywordTable.set(lowerKey, {
+            keyword,
+            usedByDomains: new Set(),
+            usageDetails: new Map()
+          });
+        }
 
-    // Get all competitor keywords
-    const allCompetitorKeywords = new Set();
-    keywordsByDomain.forEach((keywords) => {
-      keywords.forEach(k => allCompetitorKeywords.add(k));
-    });
+        const entry = keywordTable.get(lowerKey);
+        entry.usedByDomains.add(domain);
+        entry.usageDetails.set(domain, {
+          density: density || 0,
+          isPrimary: isPrimary || false,
+          isSupporting: isSupporting || false
+        });
+      };
 
-    // Calculate categories
-    const missingKeywords = [...allCompetitorKeywords].filter(keyword => {
-      if (selectedKeywords.has(keyword)) return false;
-      return Array.from(keywordsByDomain.values()).every(domainKeywords => 
-        domainKeywords.has(keyword)
+      // Add all keywords from this domain
+      page.content_analysis?.primary_keywords?.forEach(k => 
+        addKeyword(k, 0, true, false)
+      );
+      page.content_analysis?.supporting_keywords?.forEach(k => 
+        addKeyword(k, 0, false, true)
+      );
+      Object.entries(page.seo_metrics?.keyword_density || {}).forEach(([k, d]) => 
+        addKeyword(k, d, false, false)
       );
     });
 
-    const untappedKeywords = [...allCompetitorKeywords].filter(keyword => 
-      !selectedKeywords.has(keyword)
-    );
-
-    const sharedKeywords = [...selectedKeywords].filter(keyword => 
-      allCompetitorKeywords.has(keyword)
-    );
-
-    const uniqueKeywords = [...selectedKeywords].filter(keyword => 
-      !allCompetitorKeywords.has(keyword)
-    );
-
-    const allKeywords = [...new Set([...selectedKeywords, ...allCompetitorKeywords])];
-
-    return {
-      shared: sharedKeywords,
-      missing: missingKeywords,
-      untapped: untappedKeywords,
-      unique: uniqueKeywords,
-      all: allKeywords
-    };
+    return { keywordTable, competitorDomains };
   }, [data, selectedDomain]);
 
-  // Then, calculate filteredKeywords using categorizeKeywords
+  // Calculate categorized keywords
+  const categorizeKeywords = useMemo(() => {
+    const categories = {
+      all: [],
+      shared: [],
+      missing: [],
+      untapped: [],
+      unique: []
+    };
+
+    if (!masterKeywords.keywordTable) return categories;
+
+    const { keywordTable, competitorDomains } = masterKeywords;
+
+    keywordTable.forEach((entry, lowerKey) => {
+      const keyword = entry.keyword;
+      const usedBySelected = entry.usedByDomains.has(selectedDomain);
+      const competitorsUsingKeyword = [...entry.usedByDomains].filter(d => competitorDomains.has(d));
+
+      // All keywords
+      categories.all.push(keyword);
+
+      if (usedBySelected) {
+        if (competitorsUsingKeyword.length > 0) {
+          // Used by both selected domain and at least one competitor
+          categories.shared.push(keyword);
+        } else {
+          // Only used by selected domain
+          categories.unique.push(keyword);
+        }
+      } else {
+        // For untapped, any competitor usage is enough
+        if (competitorsUsingKeyword.length > 0) {
+          categories.untapped.push(keyword);
+          
+          // For missing, check if number of competitors using it equals total competitors
+          if (competitorsUsingKeyword.length === competitorDomains.size) {
+            categories.missing.push(keyword);
+          }
+        }
+      }
+    });
+
+    return categories;
+  }, [masterKeywords, selectedDomain]);
+
+  // Calculate filtered keywords with domain usage
   const filteredKeywords = useMemo(() => {
     if (!data?.pages || !selectedDomain || selectedDomain === 'all') return [];
 
     const keywords = categorizeKeywords[keywordFilter] || categorizeKeywords.all || [];
     return keywords.map(keyword => {
+      const entry = masterKeywords.keywordTable.get(keyword.toLowerCase());
       const domainUsage = new Map();
-      
-      data.pages.forEach(page => {
-        const domain = page.website_info.domain;
-        const density = page.seo_metrics?.keyword_density?.[keyword] || 0;
-        const isPrimary = page.content_analysis?.primary_keywords?.includes(keyword);
-        const isSupporting = page.content_analysis?.supporting_keywords?.includes(keyword);
-        
-        if (density > 0 || isPrimary || isSupporting) {
-          domainUsage.set(domain, { domain, density, isPrimary, isSupporting });
+
+      entry.usageDetails.forEach((usage, domain) => {
+        switch (keywordFilter) {
+          case 'untapped':
+          case 'missing':
+            // Only show competitor domains
+            if (domain !== selectedDomain) {
+              domainUsage.set(domain, {
+                domain,
+                density: usage.density,
+                isPrimary: usage.isPrimary,
+                isSupporting: usage.isSupporting
+              });
+            }
+            break;
+          case 'unique':
+            // Only show selected domain
+            if (domain === selectedDomain) {
+              domainUsage.set(domain, {
+                domain,
+                density: usage.density,
+                isPrimary: usage.isPrimary,
+                isSupporting: usage.isSupporting
+              });
+            }
+            break;
+          default:
+            // Show all domains
+            domainUsage.set(domain, {
+              domain,
+              density: usage.density,
+              isPrimary: usage.isPrimary,
+              isSupporting: usage.isSupporting
+            });
         }
       });
 
       return { keyword, domainUsage };
     });
-  }, [data, selectedDomain, keywordFilter, categorizeKeywords]);
+  }, [data, selectedDomain, keywordFilter, categorizeKeywords, masterKeywords]);
 
   const handleComparisonToggle = (domain) => {
     setComparisonDomains(prev => 
@@ -109,7 +168,6 @@ export default function KeywordAnalysis({ data }) {
     );
   };
 
-  // Keep ALL of your existing JSX/UI code exactly the same
   return (
     <div>
       <div className="mb-6">
@@ -132,11 +190,11 @@ export default function KeywordAnalysis({ data }) {
                 className={`btn btn-sm ${keywordFilter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setKeywordFilter('all')}
               >
-                All Keywords ({categorizeKeywords.all?.length || 0})
+                All ({categorizeKeywords.all?.length || 0})
               </button>
             </div>
             
-            <div className="tooltip" data-tip="Keywords that both you and other domains are using">
+            <div className="tooltip" data-tip="Keywords that both you and competitors are using">
               <button 
                 className={`btn btn-sm ${keywordFilter === 'shared' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setKeywordFilter('shared')}
@@ -145,7 +203,7 @@ export default function KeywordAnalysis({ data }) {
               </button>
             </div>
             
-            <div className="tooltip" data-tip="Keywords that all other domains use but you don't">
+            <div className="tooltip" data-tip="Keywords that all competitors use but you don't">
               <button 
                 className={`btn btn-sm ${keywordFilter === 'missing' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setKeywordFilter('missing')}
@@ -154,7 +212,7 @@ export default function KeywordAnalysis({ data }) {
               </button>
             </div>
             
-            <div className="tooltip" data-tip="Keywords you don't have but at least one other domain uses">
+            <div className="tooltip" data-tip="Keywords used by competitors but not by you">
               <button 
                 className={`btn btn-sm ${keywordFilter === 'untapped' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setKeywordFilter('untapped')}
@@ -246,4 +304,4 @@ export default function KeywordAnalysis({ data }) {
       )}
     </div>
   );
-} 
+}
