@@ -187,6 +187,15 @@ export default function Dashboard({ data }) {
                   </div>
 
                   <div>
+                    <h3 className="font-bold mb-2">NLP Keywords</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {data.pages[pageIndex].content_analysis.nlp_keywords.map((keyword, idx) => (
+                        <span key={idx} className="badge badge-info">{keyword}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
                     <h3 className="font-bold mb-2">Offerings</h3>
                     <div className="flex flex-wrap gap-2">
                       {data.pages[pageIndex].content_analysis.offerings.map((offering, idx) => (
@@ -315,6 +324,21 @@ export default function Dashboard({ data }) {
                       <div className="flex flex-wrap gap-1">
                         {data.pages[pageIndex].content_analysis.supporting_keywords.map((keyword, idx) => (
                           <span key={idx} className="badge badge-sm badge-secondary">
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+
+                <tr>
+                  <td className="font-bold bg-base-200 sticky left-0">NLP Keywords</td>
+                  {selectedPages.map(pageIndex => (
+                    <td key={pageIndex}>
+                      <div className="flex flex-wrap gap-1">
+                        {data.pages[pageIndex].content_analysis.nlp_keywords.map((keyword, idx) => (
+                          <span key={idx} className="badge badge-sm badge-info">
                             {keyword}
                           </span>
                         ))}
