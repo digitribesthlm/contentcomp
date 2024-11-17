@@ -57,6 +57,9 @@ export default function DashboardLayout({ children }) {
                 <a href="/dashboard/crawler" className={`text-gray-600 hover:text-gray-900 ${router.pathname === '/dashboard/crawler' ? 'text-blue-600 font-medium' : ''}`}>
                   Crawler
                 </a>
+                <a href="/dashboard/saved-keywords" className={`text-gray-600 hover:text-gray-900 ${router.pathname === '/dashboard/saved-keywords' ? 'text-blue-600 font-medium' : ''}`}>
+                  Saved Keywords
+                </a>
               </div>
             </div>
 
@@ -108,4 +111,4 @@ export default function DashboardLayout({ children }) {
       <Footer />
     </div>
   );
-} 
+}
