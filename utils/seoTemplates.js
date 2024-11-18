@@ -11,6 +11,7 @@ export const seoAnalysisTemplate = {
   "content_analysis": {
       "summary": "",
       "main_topic": "",
+      "type":"",
       "key_sections": [],
       "primary_keywords": [],
       "supporting_keywords": [],
