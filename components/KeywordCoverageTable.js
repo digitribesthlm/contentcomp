@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'next/router';
 
 const CoverageBar = ({ percentage, label }) => (
   <div className="flex flex-col">
@@ -19,6 +20,8 @@ const CoverageBar = ({ percentage, label }) => (
 );
 
 const KeywordCoverageTable = ({ data }) => {
+  const router = useRouter();
+
   return (
     <div className="p-6">
       <div className="mb-8">
@@ -77,6 +80,9 @@ const KeywordCoverageTable = ({ data }) => {
               </th>
               <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">
                 Missing Competitor Keywords
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">
+                Actions
               </th>
             </tr>
           </thead>
@@ -155,6 +161,14 @@ const KeywordCoverageTable = ({ data }) => {
                       </div>
                     )}
                   </div>
+                </td>
+                <td className="px-6 py-4">
+                  <button 
+                    onClick={() => router.push(`/dashboard/page-details/${page.id}`)}
+                    className="text-indigo-600 hover:text-indigo-900 hover:underline"
+                  >
+                    View Details
+                  </button>
                 </td>
               </tr>
             ))}

@@ -160,9 +160,11 @@ export default async function handler(req, res) {
       });
 
       return {
+        id: page._id.toString(), // Include the MongoDB _id
         domain: page.website_info?.domain || 'Unknown Domain',
         title: page.website_info?.title || 'Untitled',
         description: page.website_info?.meta_description || 'No description',
+        url: page.website_info?.url || '', // Include the URL
         competitorCounts: {
           primary: competitorKeywords.primary.length,
           secondary: competitorKeywords.secondary.length,
