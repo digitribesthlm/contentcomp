@@ -9,6 +9,7 @@ export default function KeywordCoveragePage() {
   const [error, setError] = useState(null);
   const [domains, setDomains] = useState([]);
   const [selectedDomain, setSelectedDomain] = useState('');
+  const [flexibleMode, setFlexibleMode] = useState(false);
 
   // Fetch available domains
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function KeywordCoveragePage() {
     fetchDomains();
   }, []);
 
-  // Fetch coverage data when domain is selected
+  // Fetch coverage data when domain or mode changes
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedDomain) return;
@@ -40,7 +41,7 @@ export default function KeywordCoveragePage() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`/api/keyword-coverage?domain=${selectedDomain}`);
+        const response = await fetch(`/api/keyword-coverage?domain=${selectedDomain}&flexibleMode=${flexibleMode}`);
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -58,10 +59,14 @@ export default function KeywordCoveragePage() {
     };
 
     fetchData();
-  }, [selectedDomain]);
+  }, [selectedDomain, flexibleMode]);
 
   const handleDomainChange = (e) => {
     setSelectedDomain(e.target.value);
+  };
+
+  const handleModeToggle = () => {
+    setFlexibleMode(!flexibleMode);
   };
 
   if (!domains.length && !error) {
@@ -78,27 +83,60 @@ export default function KeywordCoveragePage() {
     <DashboardLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-6">
-            <label htmlFor="domain" className="block text-sm font-medium text-gray-700">
-              Select Domain
-            </label>
-            <select
-              id="domain"
-              value={selectedDomain}
-              onChange={handleDomainChange}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              disabled={domains.length === 0}
-            >
-              {domains.length === 0 ? (
-                <option>No domains available</option>
-              ) : (
-                domains.map((domain) => (
-                  <option key={domain} value={domain}>
-                    {domain}
-                  </option>
-                ))
-              )}
-            </select>
+          <div className="mb-6 space-y-4">
+            <div>
+              <label htmlFor="domain" className="block text-sm font-medium text-gray-700">
+                Select Domain
+              </label>
+              <select
+                id="domain"
+                value={selectedDomain}
+                onChange={handleDomainChange}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                disabled={domains.length === 0}
+              >
+                {domains.length === 0 ? (
+                  <option>No domains available</option>
+                ) : (
+                  domains.map((domain) => (
+                    <option key={domain} value={domain}>
+                      {domain}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900">Flexible Keyword Matching</h3>
+                <p className="text-sm text-gray-500">
+                  {flexibleMode 
+                    ? "Comparing each keyword type against all competitor keywords" 
+                    : "Comparing keywords strictly by their categories (primary to primary, etc.)"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleModeToggle}
+                className={`
+                  relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer 
+                  transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+                  ${flexibleMode ? 'bg-indigo-600' : 'bg-gray-200'}
+                `}
+                role="switch"
+                aria-checked={flexibleMode}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`
+                    pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 
+                    transition ease-in-out duration-200
+                    ${flexibleMode ? 'translate-x-5' : 'translate-x-0'}
+                  `}
+                />
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-lg shadow">

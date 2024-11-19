@@ -6,10 +6,29 @@ const KeywordCoverageTable = ({ data }) => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Competitor Keyword Coverage Analysis</h1>
         <div className="mt-2 text-gray-600">
-          Analyzing competitors against keywords from: <span className="font-semibold">{data?.selectedDomain}</span>
+          Analyzing how well <span className="font-semibold">{data?.selectedDomain}</span> covers competitor keywords
         </div>
-        <div className="mt-1 text-sm text-gray-500">
-          Found {data?.totalCompetitors || 0} competitor{data?.totalCompetitors !== 1 ? 's' : ''}
+        <div className="mt-2 text-sm space-y-1">
+          <div className="text-gray-500">Our unique keywords from {data?.totalOurPages || 0} pages:</div>
+          <div>
+            Primary Keywords: <span className="font-medium">{data?.ourKeywordCounts?.primary || 0}</span>
+          </div>
+          <div>
+            Secondary Keywords: <span className="font-medium">{data?.ourKeywordCounts?.secondary || 0}</span>
+          </div>
+          <div>
+            NLP Keywords: <span className="font-medium">{data?.ourKeywordCounts?.nlp || 0}</span>
+          </div>
+        </div>
+        <div className="mt-2 text-sm text-gray-500">
+          Analyzing {data?.totalCompetitors || 0} competitor{data?.totalCompetitors !== 1 ? 's' : ''}
+        </div>
+        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+          {data?.flexibleMode ? (
+            <span>Flexible Mode: Looking for competitor keywords anywhere in our content</span>
+          ) : (
+            <span>Strict Mode: Looking for competitor keywords in matching categories</span>
+          )}
         </div>
       </div>
       
@@ -30,7 +49,7 @@ const KeywordCoverageTable = ({ data }) => {
                 NLP Keywords Coverage
               </th>
               <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">
-                Missing Keywords
+                Missing Competitor Keywords
               </th>
             </tr>
           </thead>
@@ -41,6 +60,9 @@ const KeywordCoverageTable = ({ data }) => {
                   <div className="font-medium text-gray-900">{page.domain}</div>
                   <div className="text-sm font-medium text-gray-900 mt-1">{page.title}</div>
                   <div className="text-sm text-gray-500 mt-1">{page.description}</div>
+                  <div className="mt-2 text-xs text-gray-500">
+                    Keywords: {page.competitorCounts.primary} primary, {page.competitorCounts.secondary} secondary, {page.competitorCounts.nlp} NLP
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-col">
@@ -54,7 +76,10 @@ const KeywordCoverageTable = ({ data }) => {
                         style={{ width: `${page.primaryCoverage}%` }}
                       ></div>
                     </div>
-                    <span className="text-xs text-gray-500 mt-1">{page.primaryMatches}</span>
+                    <span className="text-xs text-gray-500 mt-1">
+                      {page.primaryMatches}
+                      {data?.flexibleMode && ' (across all our content)'}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -69,7 +94,10 @@ const KeywordCoverageTable = ({ data }) => {
                         style={{ width: `${page.secondaryCoverage}%` }}
                       ></div>
                     </div>
-                    <span className="text-xs text-gray-500 mt-1">{page.secondaryMatches}</span>
+                    <span className="text-xs text-gray-500 mt-1">
+                      {page.secondaryMatches}
+                      {data?.flexibleMode && ' (across all our content)'}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -84,13 +112,16 @@ const KeywordCoverageTable = ({ data }) => {
                         style={{ width: `${page.nlpCoverage}%` }}
                       ></div>
                     </div>
-                    <span className="text-xs text-gray-500 mt-1">{page.nlpMatches}</span>
+                    <span className="text-xs text-gray-500 mt-1">
+                      {page.nlpMatches}
+                      {data?.flexibleMode && ' (across all our content)'}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900">
                     {page.missingKeywords === 'None' ? (
-                      <span className="text-green-600">No missing keywords</span>
+                      <span className="text-green-600">We cover all their keywords!</span>
                     ) : (
                       <div className="max-h-24 overflow-y-auto">
                         {page.missingKeywords}
