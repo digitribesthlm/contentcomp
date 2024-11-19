@@ -1,29 +1,56 @@
 import React from 'react';
 
+const CoverageBar = ({ percentage, label }) => (
+  <div className="flex flex-col">
+    <div className="flex justify-between items-center mb-1">
+      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <span className="text-sm font-medium text-gray-900">{percentage}%</span>
+    </div>
+    <div className="w-full bg-gray-200 rounded-full h-2.5">
+      <div 
+        className={`h-2.5 rounded-full ${
+          percentage >= 70 ? 'bg-green-500' :
+          percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+        }`}
+        style={{ width: `${percentage}%` }}
+      ></div>
+    </div>
+  </div>
+);
+
 const KeywordCoverageTable = ({ data }) => {
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Competitor Keyword Coverage Analysis</h1>
-        <div className="mt-2 text-gray-600">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold mb-4">Competitor Keyword Coverage Analysis</h1>
+        <div className="text-gray-600 mb-6">
           Analyzing how well <span className="font-semibold">{data?.selectedDomain}</span> covers competitor keywords
+          across {data?.totalCompetitors || 0} competitor{data?.totalCompetitors !== 1 ? 's' : ''}
         </div>
-        <div className="mt-2 text-sm space-y-1">
-          <div className="text-gray-500">Our unique keywords from {data?.totalOurPages || 0} pages:</div>
-          <div>
-            Primary Keywords: <span className="font-medium">{data?.ourKeywordCounts?.primary || 0}</span>
-          </div>
-          <div>
-            Secondary Keywords: <span className="font-medium">{data?.ourKeywordCounts?.secondary || 0}</span>
-          </div>
-          <div>
-            NLP Keywords: <span className="font-medium">{data?.ourKeywordCounts?.nlp || 0}</span>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <div className="text-lg font-semibold mb-4">Average Coverage</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <CoverageBar 
+              percentage={data?.averageCoverage?.total || 0} 
+              label="Total Coverage"
+            />
+            <CoverageBar 
+              percentage={data?.averageCoverage?.primary || 0} 
+              label="Primary Keywords"
+            />
+            <CoverageBar 
+              percentage={data?.averageCoverage?.secondary || 0} 
+              label="Secondary Keywords"
+            />
+            <CoverageBar 
+              percentage={data?.averageCoverage?.nlp || 0} 
+              label="NLP Keywords"
+            />
           </div>
         </div>
-        <div className="mt-2 text-sm text-gray-500">
-          Analyzing {data?.totalCompetitors || 0} competitor{data?.totalCompetitors !== 1 ? 's' : ''}
-        </div>
-        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+
+        <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
           {data?.flexibleMode ? (
             <span>Flexible Mode: Looking for competitor keywords anywhere in our content</span>
           ) : (

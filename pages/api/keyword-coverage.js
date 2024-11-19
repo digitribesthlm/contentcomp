@@ -72,6 +72,13 @@ export default async function handler(req, res) {
       'website_info.domain': { $ne: domain }
     }).toArray();
 
+    let totalPrimaryCoverage = 0;
+    let totalSecondaryCoverage = 0;
+    let totalNlpCoverage = 0;
+    let totalCompetitorPrimaryKeywords = 0;
+    let totalCompetitorSecondaryKeywords = 0;
+    let totalCompetitorNlpKeywords = 0;
+
     const analyzedPages = competitorPages.map(page => {
       // Get all competitor keywords in lowercase
       const competitorKeywords = {
@@ -80,10 +87,13 @@ export default async function handler(req, res) {
         nlp: (page.content_analysis?.nlp_keywords || []).map(k => k.toLowerCase())
       };
 
+      totalCompetitorPrimaryKeywords += competitorKeywords.primary.length;
+      totalCompetitorSecondaryKeywords += competitorKeywords.secondary.length;
+      totalCompetitorNlpKeywords += competitorKeywords.nlp.length;
+
       let primaryMatches, secondaryMatches, nlpMatches, missingKeywords;
 
       if (isFlexibleMode) {
-        // In flexible mode, check if competitor keywords appear anywhere in our content
         const allOurKeywords = [
           ...ourKeywordsLower.primary,
           ...ourKeywordsLower.secondary,
@@ -100,14 +110,12 @@ export default async function handler(req, res) {
           allOurKeywords.includes(keyword)
         );
 
-        // Missing keywords are competitor keywords we don't have
         missingKeywords = [
           ...competitorKeywords.primary.filter(keyword => !allOurKeywords.includes(keyword)),
           ...competitorKeywords.secondary.filter(keyword => !allOurKeywords.includes(keyword)),
           ...competitorKeywords.nlp.filter(keyword => !allOurKeywords.includes(keyword))
         ];
       } else {
-        // In strict mode, check if competitor keywords appear in their corresponding categories
         primaryMatches = competitorKeywords.primary.filter(keyword => 
           ourKeywordsLower.primary.includes(keyword)
         );
@@ -118,7 +126,6 @@ export default async function handler(req, res) {
           ourKeywordsLower.nlp.includes(keyword)
         );
 
-        // Missing keywords are competitor keywords we don't have in corresponding categories
         missingKeywords = [
           ...competitorKeywords.primary.filter(keyword => !ourKeywordsLower.primary.includes(keyword)),
           ...competitorKeywords.secondary.filter(keyword => !ourKeywordsLower.secondary.includes(keyword)),
@@ -126,14 +133,23 @@ export default async function handler(req, res) {
         ];
       }
 
-      // Get original case of competitor keywords for display
+      const primaryCoverage = competitorKeywords.primary.length ? 
+        Math.round((primaryMatches.length / competitorKeywords.primary.length) * 100) : 0;
+      const secondaryCoverage = competitorKeywords.secondary.length ? 
+        Math.round((secondaryMatches.length / competitorKeywords.secondary.length) * 100) : 0;
+      const nlpCoverage = competitorKeywords.nlp.length ? 
+        Math.round((nlpMatches.length / competitorKeywords.nlp.length) * 100) : 0;
+
+      totalPrimaryCoverage += primaryMatches.length;
+      totalSecondaryCoverage += secondaryMatches.length;
+      totalNlpCoverage += nlpMatches.length;
+
       const competitorOriginalKeywords = {
         primary: page.content_analysis?.primary_keywords || [],
         secondary: page.content_analysis?.supporting_keywords || [],
         nlp: page.content_analysis?.nlp_keywords || []
       };
 
-      // Map missing keywords back to original case
       const missingKeywordsOriginalCase = missingKeywords.map(lowercaseKeyword => {
         const allCompetitorKeywords = [
           ...competitorOriginalKeywords.primary,
@@ -152,29 +168,36 @@ export default async function handler(req, res) {
           secondary: competitorKeywords.secondary.length,
           nlp: competitorKeywords.nlp.length
         },
-        primaryCoverage: competitorKeywords.primary.length ? 
-          Math.round((primaryMatches.length / competitorKeywords.primary.length) * 100) : 0,
-        secondaryCoverage: competitorKeywords.secondary.length ? 
-          Math.round((secondaryMatches.length / competitorKeywords.secondary.length) * 100) : 0,
-        nlpCoverage: competitorKeywords.nlp.length ? 
-          Math.round((nlpMatches.length / competitorKeywords.nlp.length) * 100) : 0,
+        primaryCoverage,
+        secondaryCoverage,
+        nlpCoverage,
         primaryMatches: `${primaryMatches.length}/${competitorKeywords.primary.length} competitor keywords covered`,
         secondaryMatches: `${secondaryMatches.length}/${competitorKeywords.secondary.length} competitor keywords covered`,
         nlpMatches: `${nlpMatches.length}/${competitorKeywords.nlp.length} competitor keywords covered`,
         missingKeywords: missingKeywordsOriginalCase.join(', ') || 'None'
       };
     });
+
+    // Calculate average coverage percentages
+    const averageCoverage = {
+      primary: totalCompetitorPrimaryKeywords ? 
+        Math.round((totalPrimaryCoverage / totalCompetitorPrimaryKeywords) * 100) : 0,
+      secondary: totalCompetitorSecondaryKeywords ? 
+        Math.round((totalSecondaryCoverage / totalCompetitorSecondaryKeywords) * 100) : 0,
+      nlp: totalCompetitorNlpKeywords ? 
+        Math.round((totalNlpCoverage / totalCompetitorNlpKeywords) * 100) : 0,
+      total: Math.round(
+        ((totalPrimaryCoverage + totalSecondaryCoverage + totalNlpCoverage) / 
+        (totalCompetitorPrimaryKeywords + totalCompetitorSecondaryKeywords + totalCompetitorNlpKeywords)) * 100
+      ) || 0
+    };
     
     return res.status(200).json({
       selectedDomain: domain,
       totalCompetitors: competitorPages.length,
       totalOurPages: ourPages.length,
       flexibleMode: isFlexibleMode,
-      ourKeywordCounts: {
-        primary: ourKeywordsLower.primary.length,
-        secondary: ourKeywordsLower.secondary.length,
-        nlp: ourKeywordsLower.nlp.length
-      },
+      averageCoverage,
       pages: analyzedPages
     });
   } catch (error) {
