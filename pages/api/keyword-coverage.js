@@ -12,16 +12,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { db, client } = await connectToDatabase();
+    const { db } = await connectToDatabase();
     const collection = db.collection('seo_structure_pages_json');
 
-    // Get all pages for analysis
-    const pages = await collection.find({}).toArray();
-    
-    // Get the selected domain's page
-    const selectedPage = pages.find(page => 
-      page.website_info.domain === domain
-    );
+    // Get the selected domain's page first
+    const selectedPage = await collection.findOne({
+      'website_info.domain': domain
+    });
 
     if (!selectedPage) {
       return res.status(404).json({ 
@@ -29,12 +26,18 @@ export default async function handler(req, res) {
       });
     }
 
-    // Process pages and calculate coverage
-    const analyzedPages = pages.map(page => {
-      const primaryKeywords = selectedPage.content_analysis?.primary_keywords || [];
-      const secondaryKeywords = selectedPage.content_analysis?.supporting_keywords || [];
-      const nlpKeywords = selectedPage.content_analysis?.nlp_keywords || [];
+    // Get all competitor pages (excluding the selected domain)
+    const competitorPages = await collection.find({
+      'website_info.domain': { $ne: domain }
+    }).toArray();
 
+    // Get keywords from the selected domain
+    const primaryKeywords = selectedPage.content_analysis?.primary_keywords || [];
+    const secondaryKeywords = selectedPage.content_analysis?.supporting_keywords || [];
+    const nlpKeywords = selectedPage.content_analysis?.nlp_keywords || [];
+
+    // Analyze competitor pages against selected domain's keywords
+    const analyzedPages = competitorPages.map(page => {
       const pageKeywords = [
         ...(page.content_analysis?.primary_keywords || []),
         ...(page.content_analysis?.supporting_keywords || []),
@@ -58,6 +61,7 @@ export default async function handler(req, res) {
       ];
 
       return {
+        domain: page.website_info?.domain || 'Unknown Domain',
         title: page.website_info?.title || 'Untitled',
         description: page.website_info?.meta_description || 'No description',
         primaryCoverage: primaryKeywords.length ? Math.round((primaryMatches.length / primaryKeywords.length) * 100) : 0,
@@ -72,6 +76,7 @@ export default async function handler(req, res) {
     
     return res.status(200).json({
       selectedDomain: domain,
+      totalCompetitors: competitorPages.length,
       pages: analyzedPages
     });
   } catch (error) {
