@@ -116,7 +116,7 @@ export default function KeywordAnalysis({ data }) {
     if (!data?.pages || !selectedDomain || selectedDomain === 'all') return [];
 
     const keywords = categorizeKeywords[keywordFilter] || categorizeKeywords.all || [];
-    return keywords.map(keyword => {
+    const keywordsWithUsage = keywords.map(keyword => {
       const entry = masterKeywords.keywordTable.get(keyword.toLowerCase());
       const domainUsage = new Map();
 
@@ -158,6 +158,9 @@ export default function KeywordAnalysis({ data }) {
 
       return { keyword, domainUsage };
     });
+
+    // Sort by number of domains using the keyword (descending)
+    return keywordsWithUsage.sort((a, b) => b.domainUsage.size - a.domainUsage.size);
   }, [data, selectedDomain, keywordFilter, categorizeKeywords, masterKeywords]);
 
   const handleComparisonToggle = (domain) => {
