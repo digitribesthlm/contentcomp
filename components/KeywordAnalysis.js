@@ -1,6 +1,4 @@
 import { useState, useMemo } from 'react';
-import KeywordVennDiagram from './KeywordVennDiagram';
-import KeywordComparison from './KeywordComparison';
 import CartDisplay from './CartDisplay';
 
 export default function KeywordAnalysis({ data }) {
@@ -222,7 +220,7 @@ export default function KeywordAnalysis({ data }) {
             <div className="card bg-base-100 shadow-sm">
               <div className="card-body">
                 <h3 className="card-title">Visual Analysis</h3>
-                <p>Use the Venn diagram and comparison tools below to visualize keyword relationships between domains.</p>
+                <p>Use the analysis tools below to understand keyword relationships between domains.</p>
               </div>
             </div>
           </div>
@@ -352,25 +350,6 @@ export default function KeywordAnalysis({ data }) {
             </tbody>
           </table>
         </div>
-      )}
-
-      {selectedDomain !== 'all' && (
-        <>
-          <KeywordVennDiagram 
-            data={data}
-            selectedDomain={selectedDomain}
-            comparisonDomains={comparisonDomains}
-          />
-          <KeywordComparison 
-            pages={data.pages}
-            selectedPages={[
-              data.pages.findIndex(p => p.website_info.domain === selectedDomain),
-              ...comparisonDomains.map(domain => 
-                data.pages.findIndex(p => p.website_info.domain === domain)
-              )
-            ].filter(i => i !== -1)}
-          />
-        </>
       )}
 
       <CartDisplay 
