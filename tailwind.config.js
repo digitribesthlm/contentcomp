@@ -5,7 +5,11 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'custom-button': 'var(--color-custom-button)',
+      },
+    },
   },
   plugins: [require("daisyui")],
   daisyui: {
