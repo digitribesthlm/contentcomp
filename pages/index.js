@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import ServicesGrid from '../components/ServicesGrid';
 
 export default function WelcomePage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -78,8 +77,6 @@ export default function WelcomePage() {
             </div>
           </div>
         </div>
-
-        <ServicesGrid />
       </main>
 
       <Footer />
@@ -159,4 +156,3 @@ export default function WelcomePage() {
     </div>
   );
 }
-
