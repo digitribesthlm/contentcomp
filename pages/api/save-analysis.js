@@ -9,9 +9,15 @@ export default async function handler(req, res) {
     const { db } = await connectToDatabase();
     const analysis = req.body;
     
+    // Add crawl date using JavaScript's Date object
+    const analysisWithDate = {
+      ...analysis,
+      crawl_date: new Date().toISOString()
+    };
+    
     console.log('Saving analysis to MongoDB...');
     
-    const result = await db.collection("seo_structure_pages_json").insertOne(analysis);
+    const result = await db.collection("seo_structure_pages_json").insertOne(analysisWithDate);
     
     console.log('Analysis saved successfully:', result);
     
@@ -20,4 +26,4 @@ export default async function handler(req, res) {
     console.error('Error saving analysis:', error);
     res.status(500).json({ error: error.message });
   }
-} 
+}
