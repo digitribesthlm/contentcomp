@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Globe, ChevronDown, CheckCircle2, ExternalLink, MapPin, Mail, Phone, Link2 } from 'lucide-react';
+import { Globe, ChevronDown, CheckCircle2, ExternalLink, MapPin, Mail, Phone, Link2, Quote } from 'lucide-react';
 
 // Helper function to safely extract values from MongoDB format
 const extractValue = (value) => {
@@ -24,7 +24,8 @@ const PageDetailView = ({ data }) => {
     seo_metrics, 
     locations, 
     contact_info,
-    events 
+    events,
+    testimonials 
   } = data;
 
   // Prepare keyword density data
@@ -189,6 +190,27 @@ const PageDetailView = ({ data }) => {
           </div>
         )}
       </div>
+
+      {/* Testimonials Section */}
+      {testimonials && testimonials.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-lg font-semibold mb-6">Testimonials</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {testimonials.map((testimonial, index) => (
+              <div key={index} className="bg-gray-50 p-6 rounded-lg relative">
+                <Quote className="w-8 h-8 text-indigo-600 mb-4" />
+                <p className="text-gray-700 mb-4 italic">"{testimonial.content}"</p>
+                <div className="mt-4">
+                  <p className="font-semibold text-gray-900">{testimonial.author}</p>
+                  {testimonial.title && (
+                    <p className="text-gray-500 text-sm">{testimonial.title}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Value Propositions */}
       {content_analysis?.unique_value_propositions && (

@@ -1,5 +1,6 @@
 // components/Dashboard.js
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function Dashboard({ data }) {
   const [selectedPages, setSelectedPages] = useState([0]);
@@ -122,6 +123,16 @@ export default function Dashboard({ data }) {
                           </svg>
                         </div>
                       )}
+                      <Link 
+                        href={`/dashboard/page-details/${page._id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="tooltip"
+                        data-tip="View Details"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-4 h-4 stroke-secondary">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -160,13 +171,24 @@ export default function Dashboard({ data }) {
             return (
               <div key={pageIndex} className="card bg-base-100 shadow-xl">
                 <div className="card-body">
-                  <div className="bg-base-200 -mx-6 -mt-6 p-4 border-b">
-                    <h2 className="card-title text-primary text-lg">
-                      {data.pages[pageIndex].website_info.domain}
-                    </h2>
-                    <p className="text-sm opacity-70 break-all">
-                      {getDisplayUrl(data.pages[pageIndex].website_info.url)}
-                    </p>
+                  <div className="bg-base-200 -mx-6 -mt-6 p-4 border-b flex justify-between items-start">
+                    <div>
+                      <h2 className="card-title text-primary text-lg">
+                        {data.pages[pageIndex].website_info.domain}
+                      </h2>
+                      <p className="text-sm opacity-70 break-all">
+                        {getDisplayUrl(data.pages[pageIndex].website_info.url)}
+                      </p>
+                    </div>
+                    <Link 
+                      href={`/dashboard/page-details/${data.pages[pageIndex]._id}`}
+                      className="tooltip"
+                      data-tip="View Details"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-4 h-4 stroke-secondary">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                      </svg>
+                    </Link>
                   </div>
 
                   <div className="pt-4 space-y-6">
