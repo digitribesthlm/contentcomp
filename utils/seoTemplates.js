@@ -1,4 +1,3 @@
-// utils/seoTemplates.js
 export const seoAnalysisTemplate = {
   "website_info": {
       "domain":"",
@@ -18,6 +17,13 @@ export const seoAnalysisTemplate = {
       "nlp_keywords": [],
       "offerings": [],
       "unique_value_propositions": [],
+      "testimonials": [
+        {
+          "client": "",      // Name of the client/company
+          "position": "",    // Position/title of the person
+          "content": ""      // The testimonial text (can also be 'feedback' in some cases)
+        }
+      ],
       "faq": [],
       "external_links":  []
   },

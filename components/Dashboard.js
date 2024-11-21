@@ -43,6 +43,28 @@ export default function Dashboard({ data }) {
     }));
   };
 
+  // Helper function to get testimonial content regardless of key used
+  const getTestimonialContent = (testimonial) => {
+    return testimonial.content || testimonial.feedback || '';
+  };
+
+  // Helper function to normalize testimonials array
+  const normalizeTestimonials = (testimonials) => {
+    if (!Array.isArray(testimonials)) return [];
+    
+    return testimonials.map(testimonial => {
+      // If testimonial is a simple array, convert to object format
+      if (Array.isArray(testimonial)) {
+        return {
+          client: testimonial[0] || '',
+          position: testimonial[1] || '',
+          content: testimonial[2] || ''
+        };
+      }
+      return testimonial;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-base-200 p-4">
       <div className="card bg-base-100 shadow-xl mb-6">
@@ -105,152 +127,178 @@ export default function Dashboard({ data }) {
 
       {comparisonView === 'side-by-side' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {selectedPages.map(pageIndex => (
-            <div key={pageIndex} className="card bg-base-100 shadow-xl">
-              <div className="card-body">
-                <div className="bg-base-200 -mx-6 -mt-6 p-4 border-b">
-                  <h2 className="card-title text-primary text-lg">
-                    {data.pages[pageIndex].website_info.domain}
-                  </h2>
-                  <p className="text-sm opacity-70 break-all">
-                    {getDisplayUrl(data.pages[pageIndex].website_info.url)}
-                  </p>
-                </div>
-
-                <div className="pt-4 space-y-6">
-                  <div className="stats bg-base-200 w-full">
-                    <div className="stat">
-                      <div className="stat-title">SEO Score</div>
-                      <div className="stat-value text-primary">
-                        {calculateSeoScore(data.pages[pageIndex])}%
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-bold mb-2">Main Topic</h3>
-                    <p className="text-sm">
-                      {data.pages[pageIndex].content_analysis.main_topic}
+          {selectedPages.map(pageIndex => {
+            const testimonials = normalizeTestimonials(data.pages[pageIndex].content_analysis.testimonials);
+            
+            return (
+              <div key={pageIndex} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <div className="bg-base-200 -mx-6 -mt-6 p-4 border-b">
+                    <h2 className="card-title text-primary text-lg">
+                      {data.pages[pageIndex].website_info.domain}
+                    </h2>
+                    <p className="text-sm opacity-70 break-all">
+                      {getDisplayUrl(data.pages[pageIndex].website_info.url)}
                     </p>
                   </div>
 
-                  <div>
-                    <h3 className="font-bold mb-2">Keyword Density</h3>
-                    <div className="overflow-x-auto">
-                      <table className="table table-xs w-full">
-                        <thead>
-                          <tr>
-                            <th>Keyword</th>
-                            <th>Density</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {formatKeywordDensity(data.pages[pageIndex].seo_metrics.keyword_density)
-                            .sort((a, b) => b.percentage - a.percentage)
-                            .map((item, idx) => (
-                              <tr key={idx}>
-                                <td>{item.keyword}</td>
-                                <td>
-                                  <div className="flex items-center gap-2">
-                                    <div className="badge badge-primary">{item.percentage}%</div>
-                                    <div className="w-20 h-2 bg-base-200 rounded-full">
-                                      <div 
-                                        className="h-2 bg-primary rounded-full" 
-                                        style={{width: `${item.percentage}%`}}
-                                      ></div>
-                                    </div>
-                                  </div>
-                                </td>
-                              </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-bold mb-2">Primary Keywords</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {data.pages[pageIndex].content_analysis.primary_keywords.map((keyword, idx) => (
-                        <span key={idx} className="badge badge-primary">{keyword}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-bold mb-2">Supporting Keywords</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {data.pages[pageIndex].content_analysis.supporting_keywords.map((keyword, idx) => (
-                        <span key={idx} className="badge badge-secondary">{keyword}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-bold mb-2">NLP Keywords</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {data.pages[pageIndex].content_analysis.nlp_keywords.map((keyword, idx) => (
-                        <span key={idx} className="badge badge-info">{keyword}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-bold mb-2">Offerings</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {data.pages[pageIndex].content_analysis.offerings.map((offering, idx) => (
-                        <div key={idx} className="badge badge-accent badge-outline">
-                          {offering}
+                  <div className="pt-4 space-y-6">
+                    <div className="stats bg-base-200 w-full">
+                      <div className="stat">
+                        <div className="stat-title">SEO Score</div>
+                        <div className="stat-value text-primary">
+                          {calculateSeoScore(data.pages[pageIndex])}%
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <h3 className="font-bold mb-2">Unique Value Propositions</h3>
-                    <div className="space-y-2">
-                      {data.pages[pageIndex].content_analysis.unique_value_propositions.map((prop, idx) => (
-                        <div key={idx} className="alert alert-info bg-info/10 py-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-info shrink-0 w-4 h-4">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                          <span className="text-sm">{prop}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-bold mb-2">Content Sections</h3>
-                    <ul className="list-disc list-inside text-sm space-y-1">
-                      {data.pages[pageIndex].content_analysis.key_sections.map((section, idx) => (
-                        <li key={idx}>{section}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* FAQ Section - Only show if FAQs exist */}
-                  {data.pages[pageIndex].content_analysis.faq && (
                     <div>
-                      <h3 className="font-bold mb-2">Frequently Asked Questions</h3>
-                      <div className="space-y-2">
-                        {data.pages[pageIndex].content_analysis.faq.map((faq, idx) => (
-                          <details key={idx} className="collapse bg-base-200">
-                            <summary className="collapse-title font-medium">
-                              {faq.question}
-                            </summary>
-                            <div className="collapse-content">
-                              <p>{faq.answer}</p>
-                            </div>
-                          </details>
+                      <h3 className="font-bold mb-2">Main Topic</h3>
+                      <p className="text-sm">
+                        {data.pages[pageIndex].content_analysis.main_topic}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold mb-2">Keyword Density</h3>
+                      <div className="overflow-x-auto">
+                        <table className="table table-xs w-full">
+                          <thead>
+                            <tr>
+                              <th>Keyword</th>
+                              <th>Density</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {formatKeywordDensity(data.pages[pageIndex].seo_metrics.keyword_density)
+                              .sort((a, b) => b.percentage - a.percentage)
+                              .map((item, idx) => (
+                                <tr key={idx}>
+                                  <td>{item.keyword}</td>
+                                  <td>
+                                    <div className="flex items-center gap-2">
+                                      <div className="badge badge-primary">{item.percentage}%</div>
+                                      <div className="w-20 h-2 bg-base-200 rounded-full">
+                                        <div 
+                                          className="h-2 bg-primary rounded-full" 
+                                          style={{width: `${item.percentage}%`}}
+                                        ></div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold mb-2">Primary Keywords</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {data.pages[pageIndex].content_analysis.primary_keywords.map((keyword, idx) => (
+                          <span key={idx} className="badge badge-primary">{keyword}</span>
                         ))}
                       </div>
                     </div>
-                  )}
+
+                    <div>
+                      <h3 className="font-bold mb-2">Supporting Keywords</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {data.pages[pageIndex].content_analysis.supporting_keywords.map((keyword, idx) => (
+                          <span key={idx} className="badge badge-secondary">{keyword}</span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold mb-2">NLP Keywords</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {data.pages[pageIndex].content_analysis.nlp_keywords.map((keyword, idx) => (
+                          <span key={idx} className="badge badge-info">{keyword}</span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold mb-2">Offerings</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {data.pages[pageIndex].content_analysis.offerings.map((offering, idx) => (
+                          <div key={idx} className="badge badge-accent badge-outline">
+                            {offering}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold mb-2">Unique Value Propositions</h3>
+                      <div className="space-y-2">
+                        {data.pages[pageIndex].content_analysis.unique_value_propositions.map((prop, idx) => (
+                          <div key={idx} className="alert alert-info bg-info/10 py-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-info shrink-0 w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span className="text-sm">{prop}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold mb-2">Content Sections</h3>
+                      <ul className="list-disc list-inside text-sm space-y-1">
+                        {data.pages[pageIndex].content_analysis.key_sections.map((section, idx) => (
+                          <li key={idx}>{section}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Testimonials Section */}
+                    {testimonials.length > 0 && (
+                      <div>
+                        <h3 className="font-bold mb-2">Testimonials</h3>
+                        <div className="space-y-3">
+                          {testimonials.map((testimonial, idx) => (
+                            <div key={idx} className="card bg-base-200">
+                              <div className="card-body p-4">
+                                <p className="text-sm italic">"{getTestimonialContent(testimonial)}"</p>
+                                <div className="text-sm mt-2">
+                                  <span className="font-semibold">{testimonial.client}</span>
+                                  {testimonial.position && (
+                                    <span className="opacity-70"> - {testimonial.position}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* FAQ Section - Only show if FAQs exist */}
+                    {data.pages[pageIndex].content_analysis.faq && (
+                      <div>
+                        <h3 className="font-bold mb-2">Frequently Asked Questions</h3>
+                        <div className="space-y-2">
+                          {data.pages[pageIndex].content_analysis.faq.map((faq, idx) => (
+                            <details key={idx} className="collapse bg-base-200">
+                              <summary className="collapse-title font-medium">
+                                {faq.question}
+                              </summary>
+                              <div className="collapse-content">
+                                <p>{faq.answer}</p>
+                              </div>
+                            </details>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -386,6 +434,36 @@ export default function Dashboard({ data }) {
                       </ul>
                     </td>
                   ))}
+                </tr>
+
+                {/* Testimonials Row */}
+                <tr>
+                  <td className="font-bold bg-base-200 sticky left-0">Testimonials</td>
+                  {selectedPages.map(pageIndex => {
+                    const testimonials = normalizeTestimonials(data.pages[pageIndex].content_analysis.testimonials);
+                    
+                    return (
+                      <td key={pageIndex}>
+                        {testimonials.length > 0 ? (
+                          <div className="space-y-3">
+                            {testimonials.map((testimonial, idx) => (
+                              <div key={idx} className="mb-3 p-2 bg-base-200 rounded-lg">
+                                <p className="text-sm italic mb-1">"{getTestimonialContent(testimonial)}"</p>
+                                <div className="text-sm">
+                                  <span className="font-semibold">{testimonial.client}</span>
+                                  {testimonial.position && (
+                                    <span className="opacity-70"> - {testimonial.position}</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm opacity-50">No testimonials available</span>
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
 
                 <tr>
