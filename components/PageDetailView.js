@@ -12,6 +12,28 @@ const extractValue = (value) => {
   return value;
 };
 
+// Helper function to normalize testimonials array
+const normalizeTestimonials = (testimonials) => {
+  if (!Array.isArray(testimonials)) return [];
+  
+  return testimonials.map(testimonial => {
+    // If testimonial is a simple array, convert to object format
+    if (Array.isArray(testimonial)) {
+      return {
+        client: testimonial[0] || '',
+        position: testimonial[1] || '',
+        content: testimonial[2] || ''
+      };
+    }
+    return testimonial;
+  });
+};
+
+// Helper function to get testimonial content regardless of key used
+const getTestimonialContent = (testimonial) => {
+  return testimonial.content || testimonial.feedback || '';
+};
+
 const PageDetailView = ({ data }) => {
   const [activeFaq, setActiveFaq] = useState(null);
   
@@ -24,8 +46,7 @@ const PageDetailView = ({ data }) => {
     seo_metrics, 
     locations, 
     contact_info,
-    events,
-    testimonials 
+    events
   } = data;
 
   // Prepare keyword density data
@@ -34,6 +55,9 @@ const PageDetailView = ({ data }) => {
       keyword,
       density: extractValue(density)
     })).sort((a, b) => b.density - a.density) : [];
+
+  // Normalize testimonials
+  const testimonials = normalizeTestimonials(content_analysis?.testimonials || []);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 space-y-6">
@@ -199,11 +223,11 @@ const PageDetailView = ({ data }) => {
             {testimonials.map((testimonial, index) => (
               <div key={index} className="bg-gray-50 p-6 rounded-lg relative">
                 <Quote className="w-8 h-8 text-indigo-600 mb-4" />
-                <p className="text-gray-700 mb-4 italic">"{testimonial.content}"</p>
+                <p className="text-gray-700 mb-4 italic">"{getTestimonialContent(testimonial)}"</p>
                 <div className="mt-4">
-                  <p className="font-semibold text-gray-900">{testimonial.author}</p>
-                  {testimonial.title && (
-                    <p className="text-gray-500 text-sm">{testimonial.title}</p>
+                  <p className="font-semibold text-gray-900">{testimonial.client}</p>
+                  {testimonial.position && (
+                    <p className="text-gray-500 text-sm">{testimonial.position}</p>
                   )}
                 </div>
               </div>
