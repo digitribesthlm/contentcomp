@@ -10,7 +10,9 @@ export const seoAnalysisTemplate = {
   "content_analysis": {
       "summary": "",
       "main_topic": "",
+      "sub_topics": "",
       "type":"",
+      "overall_intent": "";
       "key_sections": [],
       "primary_keywords": [],
       "supporting_keywords": [],
