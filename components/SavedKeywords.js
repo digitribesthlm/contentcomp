@@ -1,25 +1,64 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 
 export default function SavedKeywords() {
+  const router = useRouter();
   const [savedKeywords, setSavedKeywords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedDomain, setSelectedDomain] = useState('');
+  const [domains, setDomains] = useState([]);
+  const [selectedKeywords, setSelectedKeywords] = useState([]);
+  const [analysisData, setAnalysisData] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (!userData) {
+      router.push('/');
+      return;
+    }
+
+    console.log('SavedKeywords component mounted');
     fetchSavedKeywords();
+    fetchDomains();
   }, []);
+
+  const fetchDomains = async () => {
+    try {
+      console.log('Fetching domains...');
+      const response = await fetch('/api/get-domains');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch domains');
+      }
+      const data = await response.json();
+      console.log('Domains fetched:', data);
+      setDomains(data.domains || []);
+      if (data.domains?.length > 0) {
+        setSelectedDomain(data.domains[0]);
+      }
+    } catch (err) {
+      console.error('Error fetching domains:', err);
+      setError('Failed to fetch domains: ' + err.message);
+    }
+  };
 
   const fetchSavedKeywords = async () => {
     try {
+      console.log('Fetching saved keywords...');
       const response = await fetch('/api/get-saved-keywords');
       if (!response.ok) {
-        throw new Error('Failed to fetch saved keywords');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch saved keywords');
       }
       const data = await response.json();
+      console.log('API Response:', data);
       setSavedKeywords(data);
     } catch (err) {
-      setError(err.message);
       console.error('Error fetching keywords:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -27,27 +66,83 @@ export default function SavedKeywords() {
 
   const formatDate = (dateValue) => {
     try {
-      // Handle MongoDB date format
-      if (dateValue && dateValue.$date && dateValue.$date.$numberLong) {
+      if (!dateValue) return 'N/A';
+      
+      if (dateValue.$date && dateValue.$date.$numberLong) {
         return new Date(parseInt(dateValue.$date.$numberLong)).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
+          day: 'numeric'
         });
       }
-      // Handle ISO string format
-      return new Date(dateValue).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (err) {
-      console.error('Error formatting date:', err);
+
+      if (typeof dateValue === 'string') {
+        return new Date(dateValue).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+
       return 'Invalid date';
+    } catch (err) {
+      console.error('Error formatting date:', err, dateValue);
+      return 'Invalid date';
+    }
+  };
+
+  const handleKeywordSelect = (keywordId) => {
+    setSelectedKeywords(prev => {
+      if (prev.includes(keywordId)) {
+        return prev.filter(id => id !== keywordId);
+      } else {
+        return [...prev, keywordId];
+      }
+    });
+  };
+
+  const handleAnalyzeContent = async () => {
+    try {
+      setAnalyzing(true);
+      console.log('Analyzing content for keywords:', selectedKeywords);
+      
+      // Prepare selected keywords data
+      const keywordsToAnalyze = savedKeywords.flatMap(entry =>
+        entry.keywords.filter((keyword, idx) => {
+          const keywordId = keyword.id?.$oid || `${entry._id}-${idx}`;
+          return selectedKeywords.includes(keywordId);
+        }).map(keyword => ({
+          mainKeyword: keyword.keyword,
+          sourceUrl: keyword.url || keyword.competitorDomain,
+          type: keyword.isPrimary ? 'primary' : keyword.isSupporting ? 'supporting' : 'regular'
+        }))
+      );
+
+      // Make API call to analyze keywords
+      const response = await fetch('/api/analyze-keywords', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedKeywords: keywordsToAnalyze,
+          targetDomain: selectedDomain
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to analyze keywords');
+      }
+
+      const data = await response.json();
+      console.log('Analysis results:', data);
+      setAnalysisData(data);
+    } catch (err) {
+      console.error('Error analyzing keywords:', err);
+      setError('Failed to analyze keywords: ' + err.message);
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -70,47 +165,151 @@ export default function SavedKeywords() {
     );
   }
 
+  console.log('Rendering SavedKeywords component with:', {
+    savedKeywords,
+    selectedDomain,
+    domains,
+    selectedKeywords,
+    debugInfo
+  });
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Saved Keywords</h1>
       
+      {/* Domain Selection Dropdown */}
+      <div className="mb-6">
+        <select 
+          className="select select-bordered w-full max-w-xs"
+          value={selectedDomain}
+          onChange={(e) => setSelectedDomain(e.target.value)}
+        >
+          <option value="" disabled>Select target domain</option>
+          {domains.map(domain => (
+            <option key={domain} value={domain}>
+              {domain}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Debug Information */}
+      {debugInfo && (
+        <div className="mb-6 p-4 bg-base-200 rounded-lg">
+          <h3 className="font-bold mb-2">Debug Information:</h3>
+          <pre className="whitespace-pre-wrap text-sm">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </div>
+      )}
+
       {!savedKeywords || savedKeywords.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-gray-500">No saved keywords found</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {savedKeywords.map((entry) => (
-            <div key={entry._id.$oid} className="card bg-base-100 shadow-xl">
-              <div className="card-body">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="card-title">
-                    Domain: {entry.domain || 'No Domain'}
-                  </h2>
-                  <span className="text-sm text-gray-500">
-                    Saved on {formatDate(entry.createdAt)}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {entry.keywords && entry.keywords.map((keyword) => (
-                    <div 
-                      key={keyword.id.$oid}
-                      className="bg-base-200 p-4 rounded-lg"
-                    >
-                      <div className="font-medium mb-2">{keyword.keyword}</div>
-                      <div className="text-sm text-gray-500">
-                        Competitor: {keyword.competitorDomain}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-2">
-                        Added: {formatDate(keyword.addedAt)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        <div className="flex flex-col gap-4">
+          <div className="overflow-x-auto">
+            <table className="table w-full">
+              <thead>
+                <tr className="bg-base-200">
+                  <th className="w-16 px-4 py-3">Select</th>
+                  <th className="px-4 py-3">Main Keyword</th>
+                  <th className="px-4 py-3">Source URL</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Density</th>
+                  <th className="px-4 py-3">Related Keywords</th>
+                  <th className="px-4 py-3">Context</th>
+                  <th className="px-4 py-3">Date Added</th>
+                </tr>
+              </thead>
+              <tbody>
+                {savedKeywords.flatMap((entry, entryIdx) => 
+                  (entry.keywords || []).map((keyword, idx) => {
+                    const keywordId = keyword.id?.$oid || `${entry._id}-${idx}`;
+                    return (
+                      <tr 
+                        key={keywordId}
+                        className="hover:bg-base-100"
+                      >
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            className="checkbox"
+                            checked={selectedKeywords.includes(keywordId)}
+                            onChange={() => handleKeywordSelect(keywordId)}
+                          />
+                        </td>
+                        <td className="px-4 py-3 font-medium">
+                          {keyword.keyword}
+                        </td>
+                        <td className="px-4 py-3">
+                          {keyword.url || keyword.competitorDomain || 'N/A'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`badge ${
+                            keyword.isPrimary ? 'badge-primary' : 
+                            keyword.isSupporting ? 'badge-secondary' : 
+                            'badge-ghost'
+                          }`}>
+                            {keyword.isPrimary ? 'Primary' : 
+                             keyword.isSupporting ? 'Supporting' : 
+                             'Regular'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {keyword.density ? `${(keyword.density * 100).toFixed(1)}%` : 'N/A'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {(entry.keywords || [])
+                              .filter(k => k.id?.$oid !== keyword.id?.$oid)
+                              .map((k, kIdx) => (
+                                <span key={k.id?.$oid || `${entryIdx}-${idx}-${kIdx}`} className="badge badge-ghost badge-sm">
+                                  {k.keyword}
+                                </span>
+                              ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm">
+                            {keyword.section && <div>Section: {keyword.section}</div>}
+                            {keyword.context && <div>Context: {typeof keyword.context === 'string' ? keyword.context : JSON.stringify(keyword.context)}</div>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {formatDate(keyword.addedAt || keyword.createdAt)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Analyze Content Button */}
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-end">
+              <button
+                className={`btn btn-primary ${analyzing ? 'loading' : ''}`}
+                onClick={handleAnalyzeContent}
+                disabled={selectedKeywords.length === 0 || !selectedDomain || analyzing}
+              >
+                {analyzing ? 'Analyzing...' : `Analyse Content (${selectedKeywords.length} selected)`}
+              </button>
             </div>
-          ))}
+
+            {/* Analysis Data Display */}
+            {analysisData && (
+              <div className="mt-4 bg-base-200 p-4 rounded-lg">
+                <h3 className="text-lg font-bold mb-2">Analysis Data for LLM:</h3>
+                <pre className="whitespace-pre-wrap overflow-x-auto bg-base-300 p-4 rounded">
+                  {JSON.stringify(analysisData, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

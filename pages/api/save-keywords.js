@@ -15,9 +15,20 @@ export default async function handler(req, res) {
     // Create the document structure
     const document = {
       domain: domain,
-      keywords: keywords.map(({ keyword, competitorDomain }) => ({
+      keywords: keywords.map(({ 
+        keyword, 
+        competitorDomain, 
+        url, 
+        isPrimary, 
+        isSupporting, 
+        density 
+      }) => ({
         keyword,
         competitorDomain,
+        url, // Store the actual competitor URL
+        isPrimary: isPrimary || false,
+        isSupporting: isSupporting || false,
+        density: density || 0,
         addedAt: new Date(timestamp).toISOString(),
         createdAt: {
           $date: {

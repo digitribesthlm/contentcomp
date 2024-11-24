@@ -17,14 +17,35 @@ export default function CartDisplay({ keywords, onRemove, selectedDomain, master
       // Get competitor domains for each keyword
       const keywordsWithDomains = keywords.map(keyword => {
         const entry = masterKeywords.keywordTable?.get(keyword.toLowerCase());
-        const competitorDomain = entry ? 
-          Array.from(entry.usedByDomains)
-            .find(domain => domain !== selectedDomain) || "Unknown Domain" 
-          : "Unknown Domain";
+        let competitorDomain = "Unknown Domain";
+        
+        if (entry) {
+          // Get all domains using this keyword except our selected domain
+          const competitorDomains = Array.from(entry.usedByDomains)
+            .filter(domain => domain !== selectedDomain);
+            
+          // Get the first competitor domain that uses this keyword
+          if (competitorDomains.length > 0) {
+            competitorDomain = competitorDomains[0];
+          }
+
+          // Get usage details for the competitor domain
+          const usageDetails = entry.usageDetails.get(competitorDomain);
+          
+          return {
+            keyword,
+            competitorDomain,
+            url: competitorDomain, // Store the actual competitor URL
+            isPrimary: usageDetails?.isPrimary || false,
+            isSupporting: usageDetails?.isSupporting || false,
+            density: usageDetails?.density || 0
+          };
+        }
 
         return {
           keyword,
-          competitorDomain
+          competitorDomain,
+          url: competitorDomain
         };
       });
 
@@ -35,7 +56,8 @@ export default function CartDisplay({ keywords, onRemove, selectedDomain, master
         },
         body: JSON.stringify({ 
           keywords: keywordsWithDomains,
-          domain: selectedDomain 
+          domain: selectedDomain,
+          sourceUrl: true // Flag to indicate we want to store the competitor URL
         }),
       });
 
@@ -109,20 +131,31 @@ export default function CartDisplay({ keywords, onRemove, selectedDomain, master
           ) : (
             <>
               <div className="space-y-2 mb-4">
-                {keywords.map((keyword) => (
-                  <div 
-                    key={keyword}
-                    className="flex justify-between items-center bg-base-200 p-2 rounded"
-                  >
-                    <span>{keyword}</span>
-                    <button 
-                      className="btn btn-ghost btn-xs"
-                      onClick={() => onRemove(keyword)}
+                {keywords.map((keyword) => {
+                  const entry = masterKeywords.keywordTable?.get(keyword.toLowerCase());
+                  const competitorDomain = entry ? 
+                    Array.from(entry.usedByDomains)
+                      .find(domain => domain !== selectedDomain) || "Unknown Domain" 
+                    : "Unknown Domain";
+
+                  return (
+                    <div 
+                      key={keyword}
+                      className="flex flex-col bg-base-200 p-2 rounded"
                     >
-                      ✕
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{keyword}</span>
+                        <button 
+                          className="btn btn-ghost btn-xs"
+                          onClick={() => onRemove(keyword)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <span className="text-xs text-gray-500">From: {competitorDomain}</span>
+                    </div>
+                  );
+                })}
               </div>
               
               {saveStatus === 'error' && (
