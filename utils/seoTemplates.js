@@ -12,7 +12,7 @@ export const seoAnalysisTemplate = {
       "main_topic": "",
       "sub_topics": "",
       "type":"",
-      "overall_intent": "";
+      "overall_intent": "",
       "key_sections": [],
       "primary_keywords": [],
       "supporting_keywords": [],
@@ -34,6 +34,14 @@ export const seoAnalysisTemplate = {
       "images": [],
       "youtube_links": [],
       "social_media_links": []
+  },
+  "robert_cialdini": {
+    "reciprocity": [],
+    "scarcity": [],
+    "authority": [],
+    "consistency": [],
+    "liking": [],
+    "social_proof": []
   },
   "locations": {
       "main_countries": [],
