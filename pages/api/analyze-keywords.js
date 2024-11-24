@@ -22,98 +22,57 @@ export default async function handler(req, res) {
 
       console.log('Query result:', {
         domain: keyword.sourceUrl,
-        found: page ? 'yes' : 'no',
-        collectionName: 'seo_structure_pages_json'
+        found: page ? 'yes' : 'no'
       });
 
       if (page) {
-        // Check if this keyword exists in primary_keywords
-        const isMainKeyword = page.content_analysis.primary_keywords.includes(keyword.mainKeyword);
-        // Or in supporting_keywords
-        const isSupporting = page.content_analysis.supporting_keywords?.includes(keyword.mainKeyword);
-
-        console.log('Keyword found:', {
-          keyword: keyword.mainKeyword,
-          inPrimary: isMainKeyword,
-          inSupporting: isSupporting
-        });
-
         return {
-          mainKeyword: keyword.mainKeyword,
+          keyword: keyword.mainKeyword,
           sourceUrl: keyword.sourceUrl,
-          type: isMainKeyword ? 'primary' : isSupporting ? 'supporting' : 'regular',
           pageInfo: {
             title: page.website_info.title,
             description: page.website_info.meta_description,
             url: page.website_info.url,
-            domain: page.website_info.domain,
-            headings: page.content_analysis.key_sections,
+            mainTopic: page.content_analysis.main_topic,
+            type: page.content_analysis.type,
             content: page.content_analysis.summary,
             sections: page.content_analysis.key_sections,
             wordCount: page.seo_metrics.total_word_count,
-            readabilityScore: page.seo_metrics.seo_score,
-            contentAnalysis: {
-              mainTopic: page.content_analysis.main_topic,
-              subTopics: page.content_analysis.sub_topics,
-              type: page.content_analysis.type,
-              intent: page.content_analysis.overall_intent,
-              primaryKeywords: page.content_analysis.primary_keywords,
-              supportingKeywords: page.content_analysis.supporting_keywords,
-              nlpKeywords: page.content_analysis.nlp_keywords,
-              offerings: page.content_analysis.offerings,
-              uniqueValueProps: page.content_analysis.unique_value_propositions
-            },
-            seoMetrics: {
-              keywordDensity: page.seo_metrics.keyword_density,
-              seoScore: page.seo_metrics.seo_score
-            }
+            readabilityScore: page.seo_metrics.seo_score
+          },
+          keywordAnalysis: {
+            inPrimaryKeywords: page.content_analysis.primary_keywords.includes(keyword.mainKeyword),
+            inSupportingKeywords: page.content_analysis.supporting_keywords?.includes(keyword.mainKeyword),
+            primaryKeywords: page.content_analysis.primary_keywords,
+            supportingKeywords: page.content_analysis.supporting_keywords,
+            nlpKeywords: page.content_analysis.nlp_keywords,
+            keywordDensity: page.seo_metrics.keyword_density
+          },
+          contentStrategy: {
+            offerings: page.content_analysis.offerings,
+            uniqueValueProps: page.content_analysis.unique_value_propositions,
+            subTopics: page.content_analysis.sub_topics,
+            intent: page.content_analysis.overall_intent
           }
         };
       }
 
       console.log('Page not found for domain:', keyword.sourceUrl);
-      return keyword;
+      return {
+        keyword: keyword.mainKeyword,
+        sourceUrl: keyword.sourceUrl,
+        error: 'Page not found'
+      };
     }));
 
     const analysisData = {
       targetDomain,
-      selectedKeywords: enrichedKeywords,
       timestamp: new Date().toISOString(),
-      analysisContext: {
+      keywords: enrichedKeywords,
+      summary: {
         totalKeywords: enrichedKeywords.length,
-        domainInfo: {
-          domain: targetDomain
-        },
-        contentStrategy: {
-          existingContent: enrichedKeywords.map(k => ({
-            keyword: k.mainKeyword,
-            pageInfo: {
-              title: k.pageInfo?.title,
-              description: k.pageInfo?.description,
-              mainTopic: k.pageInfo?.contentAnalysis?.mainTopic,
-              subTopics: k.pageInfo?.contentAnalysis?.subTopics || [],
-              intent: k.pageInfo?.contentAnalysis?.intent,
-              offerings: k.pageInfo?.contentAnalysis?.offerings || [],
-              uniqueValueProps: k.pageInfo?.contentAnalysis?.uniqueValueProps || []
-            },
-            seoMetrics: k.pageInfo?.seoMetrics || {}
-          })),
-          competitorAnalysis: enrichedKeywords.map(k => ({
-            keyword: k.mainKeyword,
-            sourceUrl: k.sourceUrl,
-            pageStructure: {
-              sections: k.pageInfo?.sections || [],
-              wordCount: k.pageInfo?.wordCount,
-              readabilityScore: k.pageInfo?.readabilityScore
-            },
-            keywordUsage: {
-              primaryKeywords: k.pageInfo?.contentAnalysis?.primaryKeywords || [],
-              supportingKeywords: k.pageInfo?.contentAnalysis?.supportingKeywords || [],
-              nlpKeywords: k.pageInfo?.contentAnalysis?.nlpKeywords || [],
-              density: k.pageInfo?.seoMetrics?.keywordDensity || {}
-            }
-          }))
-        }
+        analyzedDomains: [...new Set(enrichedKeywords.map(k => k.sourceUrl))],
+        foundPages: enrichedKeywords.filter(k => !k.error).length
       }
     };
 

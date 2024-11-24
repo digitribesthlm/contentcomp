@@ -11,7 +11,6 @@ export default function SavedKeywords() {
   const [domains, setDomains] = useState([]);
   const [selectedKeywords, setSelectedKeywords] = useState([]);
   const [analysisData, setAnalysisData] = useState(null);
-  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -102,8 +101,11 @@ export default function SavedKeywords() {
   };
 
   const handleAnalyzeContent = async () => {
+    if (analyzing) return; // Prevent double-clicks
+
     try {
       setAnalyzing(true);
+      setAnalysisData(null); // Clear previous results
       console.log('Analyzing content for keywords:', selectedKeywords);
       
       // Prepare selected keywords data
@@ -165,14 +167,6 @@ export default function SavedKeywords() {
     );
   }
 
-  console.log('Rendering SavedKeywords component with:', {
-    savedKeywords,
-    selectedDomain,
-    domains,
-    selectedKeywords,
-    debugInfo
-  });
-
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Saved Keywords</h1>
@@ -192,16 +186,6 @@ export default function SavedKeywords() {
           ))}
         </select>
       </div>
-
-      {/* Debug Information */}
-      {debugInfo && (
-        <div className="mb-6 p-4 bg-base-200 rounded-lg">
-          <h3 className="font-bold mb-2">Debug Information:</h3>
-          <pre className="whitespace-pre-wrap text-sm">
-            {JSON.stringify(debugInfo, null, 2)}
-          </pre>
-        </div>
-      )}
 
       {!savedKeywords || savedKeywords.length === 0 ? (
         <div className="text-center py-8">
