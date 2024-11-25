@@ -110,6 +110,16 @@ export default function CrawlerPage() {
                 <h3 className="text-lg font-semibold mb-2">Page Summary</h3>
                 <AnalysisDisplay analysis={analysis} />
               </div>
+              <div className="flex justify-between items-center mb-4">
+                <button 
+                  onClick={handleSave}
+                  disabled={saveStatus === 'saving'}
+                  className={`btn btn-primary ${saveStatus === 'saved' ? 'btn-success' : ''}`}
+                >
+                  {saveStatus === 'saving' && <span className="loading loading-spinner"></span>}
+                  {saveStatus === 'saved' ? 'Saved!' : 'Save Analysis'}
+                </button>
+              </div>
             </div>
           )}
 
