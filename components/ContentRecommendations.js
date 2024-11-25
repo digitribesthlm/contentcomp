@@ -2,158 +2,161 @@ export default function ContentRecommendations({ recommendations }) {
   if (!recommendations?.content_recommendations) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-8">
       {recommendations.content_recommendations.map((recommendation, index) => (
-        <div key={index} className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            {/* Keyword and Content Type Header */}
-            <div className="flex justify-between items-center">
-              <h2 className="card-title text-primary">{recommendation.keyword}</h2>
-              <div className="badge badge-secondary">{recommendation.content_type}</div>
-            </div>
+        <div key={index} className="bg-base-100 rounded-xl shadow-xl p-8 mb-8">
+          {/* Centered Title and Description */}
+          <div className="text-center mb-8">
+   
+            <h2 className="text-3xl font-semibold text-base-content mb-4">
+              {recommendation.page_structure.proposed_title}
+            </h2>
+            <p className="text-xl text-base-content/70 max-w-2xl mx-auto">
+              {recommendation.page_structure.meta_description}
+            </p>
+          </div>
 
-            {/* Page Structure */}
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold mb-2">Page Structure</h3>
-              <div className="space-y-2">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text font-medium">Proposed Title</span>
-                  </label>
-                  <input type="text" value={recommendation.page_structure.proposed_title} className="input input-bordered" readOnly />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text font-medium">Meta Description</span>
-                  </label>
-                  <textarea className="textarea textarea-bordered" value={recommendation.page_structure.meta_description} readOnly />
-                </div>
-              </div>
-
-              {/* Suggested Sections */}
-              <div className="mt-4">
-                <h4 className="font-medium mb-2">Suggested Sections</h4>
-                <div className="space-y-2">
-                  {recommendation.page_structure.suggested_sections.map((section, idx) => (
-                    <div key={idx} className="alert alert-info">
-                      <span>{section}</span>
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Left Column: Page Structure & SEO */}
+            <div className="space-y-6">
+              {/* Page Structure Card */}
+              <div className="card bg-base-200 shadow-md">
+                <div className="card-body">
+                  <h2 className="card-title text-secondary">Page Structure</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold mb-2">Original Keyword</h3>
+                      <div className="badge badge-primary badge-lg">
+                        {recommendation.keyword}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Key Points */}
-              <div className="mt-4">
-                <h4 className="font-medium mb-2">Key Points to Cover</h4>
-                <div className="space-y-2">
-                  {recommendation.page_structure.key_points_to_cover.map((point, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-success flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>{point}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Differentiation */}
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold mb-2">Differentiation Strategy</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="card bg-base-200">
-                  <div className="card-body">
-                    <h4 className="card-title text-sm">Unique Angles</h4>
-                    <ul className="list-disc list-inside">
-                      {recommendation.differentiation.unique_angles.map((angle, idx) => (
-                        <li key={idx}>{angle}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                <div className="card bg-base-200">
-                  <div className="card-body">
-                    <h4 className="card-title text-sm">Competitor Gaps</h4>
-                    <ul className="list-disc list-inside">
-                      {recommendation.differentiation.competitor_gaps.map((gap, idx) => (
-                        <li key={idx}>{gap}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* SEO Strategy */}
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold mb-2">SEO Strategy</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="card bg-base-200">
-                  <div className="card-body">
-                    <h4 className="card-title text-sm">Primary Keywords</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {recommendation.seo_strategy.primary_keywords.map((keyword, idx) => (
-                        <div key={idx} className="badge badge-primary">{keyword}</div>
-                      ))}
+                    <div>
+                      <h3 className="font-semibold mb-2">Suggested Sections</h3>
+                      <div className="space-y-2">
+                        {recommendation.page_structure.suggested_sections.map((section, idx) => (
+                          <div key={idx} className="badge badge-ghost">
+                            {section}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="card bg-base-200">
-                  <div className="card-body">
-                    <h4 className="card-title text-sm">Secondary Keywords</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {recommendation.seo_strategy.secondary_keywords.map((keyword, idx) => (
-                        <div key={idx} className="badge badge-secondary">{keyword}</div>
-                      ))}
+              </div>
+
+              {/* SEO Strategy Card */}
+              <div className="card bg-base-200 shadow-md">
+                <div className="card-body">
+                  <h2 className="card-title text-secondary">SEO Strategy</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold mb-2">Primary Keywords</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {recommendation.seo_strategy.primary_keywords.map((keyword, idx) => (
+                          <div key={idx} className="badge badge-primary">
+                            {keyword}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-2">Secondary Keywords</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {recommendation.seo_strategy.secondary_keywords.map((keyword, idx) => (
+                          <div key={idx} className="badge badge-secondary">
+                            {keyword}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Integration */}
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold mb-2">Service Integration</h3>
-              <div className="space-y-2">
-                {recommendation.integration.existing_service_connections.map((connection, idx) => (
-                  <div key={idx} className="alert alert-success">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{connection}</span>
+            {/* Right Column: Differentiation & Integration */}
+            <div className="space-y-6">
+              {/* Differentiation Card */}
+              <div className="card bg-base-200 shadow-md">
+                <div className="card-body">
+                  <h2 className="card-title text-secondary">Differentiation Strategy</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold mb-2">Unique Angles</h3>
+                      <ul className="list-disc list-inside">
+                        {recommendation.differentiation.unique_angles.map((angle, idx) => (
+                          <li key={idx} className="text-base-content/80">{angle}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-2">Competitor Gaps</h3>
+                      <ul className="list-disc list-inside">
+                        {recommendation.differentiation.competitor_gaps.map((gap, idx) => (
+                          <li key={idx} className="text-base-content/80">{gap}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                ))}
+                </div>
+              </div>
+
+              {/* Integration Card */}
+              <div className="card bg-base-200 shadow-md">
+                <div className="card-body">
+                  <h2 className="card-title text-secondary">Service Integration</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold mb-2">Service Connections</h3>
+                      <div className="space-y-2">
+                        {recommendation.integration.existing_service_connections.map((connection, idx) => (
+                          <div key={idx} className="badge badge-accent">
+                            {connection}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Key Points Section */}
+          <div className="mt-8 bg-base-200 rounded-xl p-6">
+            <h2 className="text-2xl font-bold text-secondary text-center mb-6">Key Points to Cover</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {recommendation.page_structure.key_points_to_cover.map((point, idx) => (
+                <div key={idx} className="flex items-start gap-3 bg-base-100 p-4 rounded-lg shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-base-content/80">{point}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Strategic Notes and Priority */}
+          {(recommendations.strategic_notes || recommendations.implementation_priority) && (
+            <div className="bg-base-200 rounded-xl p-6 mt-8 text-center">
+              {recommendations.strategic_notes && (
+                <div className="mb-4">
+                  <h3 className="text-xl font-semibold text-secondary mb-2">Strategic Notes</h3>
+                  <p className="text-base-content/70">{recommendations.strategic_notes}</p>
+                </div>
+              )}
+              {recommendations.implementation_priority && (
+                <div>
+                  <h3 className="text-xl font-semibold text-secondary mb-2">Implementation Priority</h3>
+                  <div className="badge badge-info">{recommendations.implementation_priority}</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ))}
-
-      {/* Strategic Notes */}
-      {recommendations.strategic_notes && (
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title text-primary">Strategic Notes</h2>
-            <div className="prose">
-              <p>{recommendations.strategic_notes}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Implementation Priority */}
-      {recommendations.implementation_priority && (
-        <div className="alert alert-info">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <h3 className="font-bold">Implementation Priority</h3>
-            <div className="text-sm">{recommendations.implementation_priority}</div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
