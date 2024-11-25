@@ -106,18 +106,10 @@ export default function CrawlerPage() {
 
           {analysis && (
             <div className="mt-8">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Analysis Results</h3>
-                <button 
-                  onClick={handleSave}
-                  disabled={saveStatus === 'saving'}
-                  className={`btn btn-primary ${saveStatus === 'saved' ? 'btn-success' : ''}`}
-                >
-                  {saveStatus === 'saving' && <span className="loading loading-spinner"></span>}
-                  {saveStatus === 'saved' ? 'Saved!' : 'Save Analysis'}
-                </button>
+              <div className="card bg-base-100 shadow-md p-4 mb-4">
+                <h3 className="text-lg font-semibold mb-2">Page Summary</h3>
+                <AnalysisDisplay analysis={analysis} />
               </div>
-              <AnalysisDisplay analysis={analysis} />
             </div>
           )}
 
@@ -133,4 +125,4 @@ export default function CrawlerPage() {
       </div>
     </DashboardLayout>
   );
-} 
+}

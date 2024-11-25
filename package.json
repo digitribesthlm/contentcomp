@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "chart.js": "^4.4.6",
     "cookie": "^0.6.0",
     "d3": "^7.9.0",
     "daisyui": "^4.12.14",
@@ -20,6 +21,7 @@
     "next": "13.4.19",
     "openai": "^4.72.0",
     "react": "18.2.0",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "18.2.0",
     "react-icons": "^5.0.1",
     "recharts": "^2.13.3",

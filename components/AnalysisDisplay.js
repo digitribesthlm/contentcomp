@@ -1,3 +1,5 @@
+import RadarChart from './RadarChart';
+
 export default function AnalysisDisplay({ analysis }) {
   if (!analysis) return null;
 
@@ -151,6 +153,19 @@ export default function AnalysisDisplay({ analysis }) {
             </div>
           </div>
 
+          {/* Influence Metrics */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Influence Metrics
+              </h2>
+              <RadarChart data={analysis.influence_metrics.persuasion_score} />
+            </div>
+          </div>
+
           {/* FAQ Section */}
           {analysis.content_analysis.faq?.length > 0 && (
             <div className="card bg-base-100 shadow-xl">
@@ -181,4 +196,4 @@ export default function AnalysisDisplay({ analysis }) {
       </div>
     </div>
   );
-} 
+}
