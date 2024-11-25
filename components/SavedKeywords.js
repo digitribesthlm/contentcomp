@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import ContentRecommendations from './ContentRecommendations';
 
 export default function SavedKeywords() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function SavedKeywords() {
   const [selectedKeywords, setSelectedKeywords] = useState([]);
   const [analysisData, setAnalysisData] = useState(null);
   const [contentRecommendations, setContentRecommendations] = useState(null);
+  const [activeTab, setActiveTab] = useState('recommendations');
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -106,8 +108,9 @@ export default function SavedKeywords() {
 
     try {
       setAnalyzing(true);
-      setAnalysisData(null); // Clear previous results
-      setContentRecommendations(null); // Clear previous recommendations
+      setAnalysisData(null);
+      setContentRecommendations(null);
+      setActiveTab('recommendations');
       console.log('Analyzing content for keywords:', selectedKeywords);
       
       // Prepare selected keywords data
@@ -160,6 +163,7 @@ export default function SavedKeywords() {
       }
 
       const recommendations = await contentResponse.json();
+      console.log('Content recommendations:', recommendations);
       setContentRecommendations(recommendations);
     } catch (err) {
       console.error('Error analyzing content:', err);
@@ -305,23 +309,45 @@ export default function SavedKeywords() {
               </button>
             </div>
 
-            {/* Analysis Data Display */}
-            {analysisData && (
-              <div className="mt-4 bg-base-200 p-4 rounded-lg">
-                <h3 className="text-lg font-bold mb-2">Keyword Analysis:</h3>
-                <pre className="whitespace-pre-wrap overflow-x-auto bg-base-300 p-4 rounded">
-                  {JSON.stringify(analysisData, null, 2)}
-                </pre>
-              </div>
-            )}
+            {/* Analysis Results */}
+            {(analysisData || contentRecommendations) && (
+              <div className="mt-4">
+                <h3 className="text-lg font-bold mb-4">Analysis Results</h3>
+                <div className="tabs tabs-boxed mb-4">
+                  <button 
+                    className={`tab ${activeTab === 'recommendations' ? 'tab-active' : ''}`}
+                    onClick={() => setActiveTab('recommendations')}
+                  >
+                    Content Recommendations
+                  </button>
+                  <button 
+                    className={`tab ${activeTab === 'raw' ? 'tab-active' : ''}`}
+                    onClick={() => setActiveTab('raw')}
+                  >
+                    Raw Data
+                  </button>
+                </div>
+                
+                {/* Content Recommendations */}
+                {activeTab === 'recommendations' && (
+                  analyzing ? (
+                    <div className="flex justify-center items-center p-8">
+                      <div className="loading loading-spinner loading-lg"></div>
+                      <span className="ml-4">Generating recommendations...</span>
+                    </div>
+                  ) : contentRecommendations ? (
+                    <ContentRecommendations recommendations={contentRecommendations} />
+                  ) : null
+                )}
 
-            {/* Content Recommendations Display */}
-            {contentRecommendations && (
-              <div className="mt-4 bg-base-200 p-4 rounded-lg">
-                <h3 className="text-lg font-bold mb-2">Content Recommendations:</h3>
-                <pre className="whitespace-pre-wrap overflow-x-auto bg-base-300 p-4 rounded">
-                  {JSON.stringify(contentRecommendations, null, 2)}
-                </pre>
+                {/* Raw Data */}
+                {activeTab === 'raw' && analysisData && (
+                  <div className="bg-base-300 p-4 rounded">
+                    <pre className="whitespace-pre-wrap overflow-x-auto">
+                      {JSON.stringify(analysisData, null, 2)}
+                    </pre>
+                  </div>
+                )}
               </div>
             )}
           </div>
