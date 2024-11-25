@@ -6,8 +6,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { selectedKeywords, targetDomain } = req.body;
-    console.log('Analyzing keywords:', { selectedKeywords, targetDomain });
+    const { selectedKeywords, targetDomain, includeCompanyData } = req.body;
+    console.log('Analyzing keywords:', { selectedKeywords, targetDomain, includeCompanyData });
 
     const { db } = await connectToDatabase();
 
@@ -65,6 +65,31 @@ export default async function handler(req, res) {
       };
     }));
 
+    // Fetch company data if requested
+    let companyData = null;
+    if (includeCompanyData && targetDomain) {
+      console.log('Fetching company data for domain:', targetDomain);
+      
+      // Find all pages for the target domain
+      const companyPages = await db.collection('seo_structure_pages_json')
+        .find({ 'website_info.domain': targetDomain })
+        .toArray();
+
+      if (companyPages.length > 0) {
+        // Create simplified page information
+        const pageInfo = companyPages.map(page => ({
+          url: page.website_info.url,
+          mainTopic: page.content_analysis.main_topic,
+          mainKeywords: page.content_analysis.primary_keywords || []
+        }));
+
+        companyData = {
+          domain: targetDomain,
+          pages: pageInfo
+        };
+      }
+    }
+
     const analysisData = {
       targetDomain,
       timestamp: new Date().toISOString(),
@@ -73,7 +98,8 @@ export default async function handler(req, res) {
         totalKeywords: enrichedKeywords.length,
         analyzedDomains: [...new Set(enrichedKeywords.map(k => k.sourceUrl))],
         foundPages: enrichedKeywords.filter(k => !k.error).length
-      }
+      },
+      companyData // Include simplified company data in the response
     };
 
     console.log('Analysis results:', JSON.stringify(analysisData, null, 2));

@@ -11,6 +11,7 @@ export default function SavedKeywords() {
   const [domains, setDomains] = useState([]);
   const [selectedKeywords, setSelectedKeywords] = useState([]);
   const [analysisData, setAnalysisData] = useState(null);
+  const [contentRecommendations, setContentRecommendations] = useState(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -106,6 +107,7 @@ export default function SavedKeywords() {
     try {
       setAnalyzing(true);
       setAnalysisData(null); // Clear previous results
+      setContentRecommendations(null); // Clear previous recommendations
       console.log('Analyzing content for keywords:', selectedKeywords);
       
       // Prepare selected keywords data
@@ -120,29 +122,48 @@ export default function SavedKeywords() {
         }))
       );
 
-      // Make API call to analyze keywords
-      const response = await fetch('/api/analyze-keywords', {
+      // First API call to analyze keywords
+      const keywordResponse = await fetch('/api/analyze-keywords', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           selectedKeywords: keywordsToAnalyze,
-          targetDomain: selectedDomain
+          targetDomain: selectedDomain,
+          includeCompanyData: true
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!keywordResponse.ok) {
+        const errorData = await keywordResponse.json();
         throw new Error(errorData.message || 'Failed to analyze keywords');
       }
 
-      const data = await response.json();
-      console.log('Analysis results:', data);
-      setAnalysisData(data);
+      const keywordAnalysis = await keywordResponse.json();
+      setAnalysisData(keywordAnalysis);
+
+      // Second API call to get content recommendations
+      const contentResponse = await fetch('/api/analyze-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          analysisData: keywordAnalysis
+        }),
+      });
+
+      if (!contentResponse.ok) {
+        const errorData = await contentResponse.json();
+        throw new Error(errorData.message || 'Failed to get content recommendations');
+      }
+
+      const recommendations = await contentResponse.json();
+      setContentRecommendations(recommendations);
     } catch (err) {
-      console.error('Error analyzing keywords:', err);
-      setError('Failed to analyze keywords: ' + err.message);
+      console.error('Error analyzing content:', err);
+      setError('Failed to analyze content: ' + err.message);
     } finally {
       setAnalyzing(false);
     }
@@ -287,9 +308,19 @@ export default function SavedKeywords() {
             {/* Analysis Data Display */}
             {analysisData && (
               <div className="mt-4 bg-base-200 p-4 rounded-lg">
-                <h3 className="text-lg font-bold mb-2">Analysis Data for LLM:</h3>
+                <h3 className="text-lg font-bold mb-2">Keyword Analysis:</h3>
                 <pre className="whitespace-pre-wrap overflow-x-auto bg-base-300 p-4 rounded">
                   {JSON.stringify(analysisData, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {/* Content Recommendations Display */}
+            {contentRecommendations && (
+              <div className="mt-4 bg-base-200 p-4 rounded-lg">
+                <h3 className="text-lg font-bold mb-2">Content Recommendations:</h3>
+                <pre className="whitespace-pre-wrap overflow-x-auto bg-base-300 p-4 rounded">
+                  {JSON.stringify(contentRecommendations, null, 2)}
                 </pre>
               </div>
             )}
