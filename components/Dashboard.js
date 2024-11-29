@@ -1,10 +1,13 @@
 // components/Dashboard.js
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 
 export default function Dashboard({ data }) {
   const [selectedPages, setSelectedPages] = useState([0]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [comparisonView, setComparisonView] = useState('side-by-side');
+  const itemsPerPage = 10;
 
   const togglePageSelection = (pageIndex) => {
     setSelectedPages(prev => 
@@ -12,6 +15,54 @@ export default function Dashboard({ data }) {
         ? prev.filter(i => i !== pageIndex)
         : [...prev, pageIndex]
     );
+  };
+
+  // Filter pages based on search query
+  const filteredPages = useMemo(() => {
+    return data.pages.filter(page => {
+      const searchLower = searchQuery.toLowerCase();
+      const url = page.website_info.url.toLowerCase();
+      const domain = new URL(page.website_info.url).hostname.toLowerCase();
+      return url.includes(searchLower) || domain.includes(searchLower);
+    });
+  }, [data.pages, searchQuery]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredPages.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPages = filteredPages.slice(startIndex, endIndex);
+
+  // Generate pagination numbers
+  const getPaginationNumbers = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+    let l;
+
+    range.push(1);
+
+    for (let i = currentPage - delta; i <= currentPage + delta; i++) {
+      if (i < totalPages && i > 1) {
+        range.push(i);
+      }
+    }
+
+    range.push(totalPages);
+
+    for (let i of range) {
+      if (l) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if (i - l !== 1) {
+          rangeWithDots.push('...');
+        }
+      }
+      rangeWithDots.push(i);
+      l = i;
+    }
+
+    return rangeWithDots;
   };
 
   function calculateSeoScore(pageData) {
@@ -81,58 +132,80 @@ export default function Dashboard({ data }) {
     <div className="min-h-screen bg-base-200 p-4">
       <div className="card bg-base-100 shadow-xl mb-6">
         <div className="card-body">
-          <h1 className="text-3xl font-bold text-primary mb-4">Content Comparison Tool</h1>
+          <h1 className="text-3xl font-bold text-primary mb-6">Content Comparison Tool</h1>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {data.pages.map((page, index) => (
+          {/* Search Bar */}
+          <div className="mb-8">
+            <div className="relative">
+              <input 
+                type="text" 
+                placeholder="Search pages..." 
+                className="input input-bordered w-full pl-10"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+              />
+              <svg 
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth="2" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Pages Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {currentPages.map((page, index) => (
               <div 
-                key={index}
-                onClick={() => togglePageSelection(index)}
-                className={`card cursor-pointer border-2 hover:shadow-lg transition-all ${
-                  selectedPages.includes(index) 
-                    ? 'border-primary bg-primary/10' 
+                key={startIndex + index}
+                className={`card bg-white hover:shadow-lg transition-all cursor-pointer border ${
+                  selectedPages.includes(startIndex + index) 
+                    ? 'border-primary' 
                     : 'border-base-300'
                 }`}
+                onClick={() => togglePageSelection(startIndex + index)}
               >
                 <div className="card-body p-4">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-primary shrink-0" 
-                      checked={selectedPages.includes(index)}
-                      onChange={() => {}} // Handled by parent div click
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-sm truncate">{page.website_info.domain}</h3>
-                      <p className="text-xs opacity-70 truncate" title={page.website_info.url}>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        {new URL(page.website_info.url).hostname}
+                      </div>
+                      <div className="text-sm text-gray-500 truncate">
                         {getDisplayUrl(page.website_info.url)}
-                      </p>
+                      </div>
                     </div>
-                    <div className="flex gap-1 items-center shrink-0 ml-2">
-                      {hasTestimonials(page) && (
-                        <div className="tooltip" data-tip="Has Testimonials">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-4 h-4 stroke-primary">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                          </svg>
-                        </div>
-                      )}
-                      {hasFAQs(page) && (
-                        <div className="tooltip" data-tip="Has FAQs">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-4 h-4 stroke-info">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                        </div>
-                      )}
-                      <Link 
-                        href={`/dashboard/page-details/${page._id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="tooltip"
-                        data-tip="View Details"
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button 
+                        className="btn btn-circle btn-sm btn-ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Add history functionality
+                        }}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-4 h-4 stroke-secondary">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                      </Link>
+                      </button>
+                      <button 
+                        className="btn btn-circle btn-sm btn-ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(page.website_info.url, '_blank');
+                        }}
+                      >
+                        <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                          <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -140,25 +213,41 @@ export default function Dashboard({ data }) {
             ))}
           </div>
 
-          <div className="flex justify-between items-center">
-            <div className="tabs tabs-boxed">
-              <a 
-                className={`tab ${comparisonView === 'side-by-side' ? 'tab-active' : ''}`}
-                onClick={() => setComparisonView('side-by-side')}
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2">
+              <button 
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
               >
-                Side by Side
-              </a>
-              <a 
-                className={`tab ${comparisonView === 'table' ? 'tab-active' : ''}`}
-                onClick={() => setComparisonView('table')}
+                «
+              </button>
+              
+              {getPaginationNumbers().map((pageNum, i) => (
+                <button 
+                  key={i}
+                  className={`btn btn-sm ${pageNum === currentPage ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => typeof pageNum === 'number' && setCurrentPage(pageNum)}
+                  disabled={pageNum === '...'}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button 
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
               >
-                Table View
-              </a>
+                »
+              </button>
             </div>
-            
-            <div className="text-sm opacity-70">
-              {selectedPages.length} pages selected
-            </div>
+          )}
+
+          {/* Results count */}
+          <div className="text-sm text-gray-500 text-center mt-4">
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredPages.length)} of {filteredPages.length} results
           </div>
         </div>
       </div>
