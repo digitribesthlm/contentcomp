@@ -134,9 +134,9 @@ export default function Dashboard({ data }) {
         <div className="card-body">
           <h1 className="text-3xl font-bold text-primary mb-6">Content Comparison Tool</h1>
           
-          {/* Search Bar */}
-          <div className="mb-8">
-            <div className="relative">
+          {/* Search Bar and View Toggle */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+            <div className="relative flex-1 w-full">
               <input 
                 type="text" 
                 placeholder="Search pages..." 
@@ -159,59 +159,133 @@ export default function Dashboard({ data }) {
                 <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
+
+            <div className="tabs tabs-boxed shrink-0">
+              <button 
+                className={`tab ${comparisonView === 'side-by-side' ? 'tab-active' : ''}`}
+                onClick={() => setComparisonView('side-by-side')}
+              >
+                Grid View
+              </button>
+              <button 
+                className={`tab ${comparisonView === 'table' ? 'tab-active' : ''}`}
+                onClick={() => setComparisonView('table')}
+              >
+                Table View
+              </button>
+            </div>
           </div>
 
-          {/* Pages Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {currentPages.map((page, index) => (
-              <div 
-                key={startIndex + index}
-                className={`card bg-white hover:shadow-lg transition-all cursor-pointer border ${
-                  selectedPages.includes(startIndex + index) 
-                    ? 'border-primary' 
-                    : 'border-base-300'
-                }`}
-                onClick={() => togglePageSelection(startIndex + index)}
-              >
-                <div className="card-body p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-gray-900 truncate">
-                        {new URL(page.website_info.url).hostname}
+          {/* Content based on view mode */}
+          {comparisonView === 'side-by-side' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {currentPages.map((page, index) => (
+                <div 
+                  key={startIndex + index}
+                  className={`card bg-white hover:shadow-lg transition-all cursor-pointer border ${
+                    selectedPages.includes(startIndex + index) 
+                      ? 'border-primary' 
+                      : 'border-base-300'
+                  }`}
+                  onClick={() => togglePageSelection(startIndex + index)}
+                >
+                  <div className="card-body p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {new URL(page.website_info.url).hostname}
+                        </div>
+                        <div className="text-sm text-gray-500 truncate">
+                          {getDisplayUrl(page.website_info.url)}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500 truncate">
-                        {getDisplayUrl(page.website_info.url)}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button 
+                          className="btn btn-circle btn-sm btn-ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Add history functionality
+                          }}
+                        >
+                          <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </button>
+                        <button 
+                          className="btn btn-circle btn-sm btn-ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(page.website_info.url, '_blank');
+                          }}
+                        >
+                          <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                            <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </button>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button 
-                        className="btn btn-circle btn-sm btn-ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Add history functionality
-                        }}
-                      >
-                        <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </button>
-                      <button 
-                        className="btn btn-circle btn-sm btn-ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(page.website_info.url, '_blank');
-                        }}
-                      >
-                        <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                          <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </button>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto mb-6">
+              <table className="table w-full">
+                <thead>
+                  <tr>
+                    <th className="w-8">
+                      <label>
+                        <input type="checkbox" className="checkbox" />
+                      </label>
+                    </th>
+                    <th>Domain</th>
+                    <th>Path</th>
+                    <th className="w-20">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentPages.map((page, index) => (
+                    <tr key={startIndex + index} className="hover">
+                      <td>
+                        <label>
+                          <input 
+                            type="checkbox" 
+                            className="checkbox"
+                            checked={selectedPages.includes(startIndex + index)}
+                            onChange={() => togglePageSelection(startIndex + index)}
+                          />
+                        </label>
+                      </td>
+                      <td>{new URL(page.website_info.url).hostname}</td>
+                      <td>{getDisplayUrl(page.website_info.url)}</td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            className="btn btn-circle btn-sm btn-ghost"
+                            onClick={() => {
+                              // Add history functionality
+                            }}
+                          >
+                            <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </button>
+                          <button 
+                            className="btn btn-circle btn-sm btn-ghost"
+                            onClick={() => window.open(page.website_info.url, '_blank')}
+                          >
+                            <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                              <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Pagination */}
           {totalPages > 1 && (
